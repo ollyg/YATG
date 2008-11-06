@@ -1,0 +1,16 @@
+Source: yatg
+Section: net
+Priority: extra
+Maintainer: Oliver Gorwits <oliver.gorwits@oucs.ox.ac.uk>
+Build-Depends: debhelper (>= 5), dpatch
+Standards-Version: 3.7.2
+
+Package: yatg
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl, libreadonly-perl, libtime-hires-perl, libdbi-perl, libsnmp-perl, libsnmp-effective-perl, libnet-netmask-perl, libregexp-common-perl, liblog-dispatch-perl
+Suggests: librpc-serialized-perl, libcache-memcached-perl, libcgi-perl, libperlchartdir-perl
+Description: YATG ain't a traffic grapher
+ YATG is a system designed to partner with NetDisco and provide fast
+ SNMP polling of data and status from network devices. It can also
+ generate good-looking graphs of this data, or store values to a
+ Memcached server.

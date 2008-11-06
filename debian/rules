@@ -1,0 +1,102 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+PKG = yatg
+TMP = $(CURDIR)/debian/$(PKG)
+
+INSTALL = install
+INSTALL_FILE    = $(INSTALL) -p    -oroot -groot -m644
+INSTALL_PROGRAM = $(INSTALL) -p    -oroot -groot -m755
+INSTALL_SCRIPT  = $(INSTALL) -p    -oroot -groot -m755
+INSTALL_DIR     = $(INSTALL) -p -d -oroot -groot -m755
+
+configure:
+
+build:
+
+clean: clean-patched unpatch
+clean-patched:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean
+
+unpatch:
+	dpatch deapply-all
+	rm -rf patch-stamp debian/patched
+
+install: install-all
+
+install-all:
+	echo ""
+	echo $(PKG)
+	dh_testdir
+	dh_testroot
+#	dh_clean -k 
+	dh_installdirs
+
+	$(INSTALL_DIR) $(TMP)
+	$(INSTALL_DIR) $(TMP)/usr/bin
+	$(INSTALL_DIR) $(TMP)/usr/lib/cgi-bin
+	$(INSTALL_DIR) $(TMP)/usr/share/perl5/RPC/Serialized/Handler/YATG
+	$(INSTALL_DIR) $(TMP)/usr/share/perl5/YATG/Retrieve
+	$(INSTALL_DIR) $(TMP)/usr/share/perl5/YATG/Store
+
+	$(INSTALL_PROGRAM) usr/bin/yatg_updater $(TMP)/usr/bin/yatg_updater
+	$(INSTALL_PROGRAM) usr/lib/cgi-bin/*    $(TMP)/usr/lib/cgi-bin
+
+	$(INSTALL_FILE) lib/RPC/Serialized/Handler/YATG/* $(TMP)/usr/share/perl5/RPC/Serialized/Handler/YATG
+	$(INSTALL_FILE) lib/YATG/Retrieve/* $(TMP)/usr/share/perl5/YATG/Retrieve
+	$(INSTALL_FILE) lib/YATG/Store/*    $(TMP)/usr/share/perl5/YATG/Store
+	$(INSTALL_FILE) lib/YATG/*.pm       $(TMP)/usr/share/perl5/YATG
+
+	dh_install
+
+
+patch: patch-stamp
+patch-stamp:
+	dpatch apply-all
+	dpatch cat-all >patch-stamp
+
+binary-arch:
+
+binary-indep: install patch install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress -X.sql
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep
+.PHONY: clean-patched unpatch patch patch-stamp build clean binary-indep binary-arch binary install configure install-all

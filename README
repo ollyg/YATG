@@ -1,0 +1,160 @@
+NAME
+    YATG - Fast SNMP data poller daemon, with storage and graphing
+
+VERSION
+    This document refers to version 2.0000 of YATG
+
+DESCRIPTION
+    YATG is an application which is intended to be run persistently. At
+    intervals it will wake up and poll network devices for SNMP data, and
+    then store or print that data. In this distribution are also included
+    examples for presenting simple CGI web pages with graphs.
+
+    Please understand that YATG is probably not going to be a plug-and-play
+    system for you. We took the decision to generalize the code as much as
+    possible, and release it, in the hope that other network systems
+    administrators might find our solutions to these problems interesting,
+    and maybe provide feedback.
+
+    However, YATG is flexible and powerful. It can poll a large number of
+    devices with thousands of ports in just a few seconds. The configuration
+    is very simple, and the defaults sane (it's designed for sysadmins,
+    after all).
+
+    You can use YATG both for historical logging, such as traffic counters
+    on ports, as well as short-term monitoring which might feed into, say,
+    Nagios. Wherever possible, data is translated to human-friendly formats
+    for storage, such as using Leaf Names instead of OIDs, translated values
+    ("up", "down", etc) and device port names rather than SNMP Interface
+    Indexes.
+
+    One final thing; YATG works well for us, but might not for you. We know
+    that the code is rough in places. Take this distribution as a proof of
+    concept, and please send patches, comments and suggestions to the email
+    address below.
+
+How Does It Work?
+    At startup, "yatg_updater" loads its configuration from local files and
+    a database, performs some basic SNMP connections to build a cache about
+    device capabilities and so on, and then goes to sleep.
+
+    Periodically, as determined by the configuration, "yatg_updater" wakes
+    up and polls all devices, then stores results, again according to
+    instructions in the configuration.
+
+    If you have only the essential dependencies installed (see below) then
+    you can only output results to STDOUT. With other modules, you have more
+    options such as local or remote disk, or memcached based storage.
+
+    "yatg_updater" will re-load all its configuration if given a HUP signal.
+    If you run the daemon persistently (for example with "daemontools") then
+    a cron job once a day is a good way to refresh the configuration. There
+    is reference to this in one of the bundled example files.
+
+What's in this distribution
+    "yatg_updater"
+        This is the main application, designed to be run persistently. It
+        does not accept any input and only produces output when in debugging
+        mode. It is a smart wrapper for the SNMP::Effective module.
+
+    YATG::Store family of modules
+        These are modules which take the SNMP poll results and store them to
+        either local Disk, a Memcached server, or the disk on a remote
+        networked server.
+
+    YATG::Retrieve family of modules
+        These are modules which read stored results back to you, for a given
+        time window. The data can be retrieved from local Disk, a Memcached
+        server, or the disk on a remote networked server.
+
+    RPC::Serialized handlers
+        If storing and/or retrieving on a remote networked server, it should
+        run an instance of RPC::Serialized, and these are the RPC Handlers
+        for that server (see that module's documentation for further
+        details).
+
+    CGI For the special case of viewing graphs of disk-based poll results
+        for switch port traffic counters, there is are two CGI scripts. One
+        is a wrapper which presents an HTML page embedded with PNG images
+        created from the other script.
+
+    Examples
+        The "examples/" folder includes a copy of each of the files you
+        should need for a complete deployment of YATG. Obviously some of
+        them contain dummy data.
+
+Where to go from here
+    To begin with, you probably want to see how to configure "yatg_updater"
+    in YATG::Config.
+
+    Alongside that, there are examples of all the files you should need to
+    install, in the "examples/" folder of this distribution.
+
+LOGGING and TESTING
+    This module uses "Log::Dispatch::Syslog" for logging, and by default
+    will log timing data to your system's syslog service. More information
+    is provided in the YATG::Config documentation.
+
+    To run in debug mode, where timing data is output to standard out rather
+    than syslog, set the environment variable "YATG_DEBUG" to a true value.
+
+    To run the poller just once, set the "YATG_SINGLE_RUN" environment
+    variable to a true value. This is great for development. It makes
+    "yatg_updater" load its configuration, generate the device hints cache,
+    sleep and then run just one poll cycle before exiting.
+
+    For example:
+
+     YATG_DEBUG=1 YATG_SINGLE_RUN=1 /usr/bin/yatg_updater /etc/yatg.yml
+
+DEPENDENCIES
+    The following modules are dependencies of the YATG system, in addition
+    to the standard contents of the Perl distribution itself:
+
+    Class::Data::Inheritable
+    DBI
+    Log::Dispatch::Syslog
+    Module::MultiConf
+    Net::Netmask
+    Readonly
+    Regexp::Common
+    SNMP
+    SNMP::Effective (but not version 1.0)
+    Time::HiRes
+
+    The following modules are optional, and allow you to use additional
+    bundled features such as data storage, graphing, and so on:
+
+    CGI
+    Cache::Memcached
+    RPC::Serialized
+    Tie::File::FixedRecLen
+    URI::Escape
+    perlchartdir
+
+SEE ALSO
+    SNMP::Effective
+        This system uses SNMP::Effective at its core do the polling.
+
+    RPC::Serialized
+        Store polled data on another server using RPC::Serialized.
+
+AUTHOR
+    Oliver Gorwits "<oliver.gorwits@oucs.ox.ac.uk>"
+
+COPYRIGHT & LICENSE
+    Copyright (c) The University of Oxford 2007. All Rights Reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of version 2 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+

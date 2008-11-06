@@ -1,0 +1,21 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         YATG
+version:      2.0000
+version_from: usr/bin/yatg_updater
+installdirs:  site
+requires:
+    Class::Data::Inheritable:   0
+    DBI:                        0
+    Log::Dispatch::Syslog:      0
+    Module::MultiConf:          0
+    Net::Netmask:               0
+    Readonly:                   0
+    Regexp::Common:             0
+    SNMP:                       0
+    SNMP::Effective:            1.04
+    Time::HiRes:                0
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.30_01
+
