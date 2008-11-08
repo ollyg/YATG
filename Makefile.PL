@@ -1,29 +1,25 @@
-use 5.006;
-use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
-WriteMakefile(
-    NAME              => 'YATG',
-    VERSION_FROM      => 'usr/bin/yatg_updater', # finds $VERSION
-    PREREQ_PM         => {
-       'Class::Data::Inheritable'   => 0,
-       'DBI'                        => 0,
-       'Log::Dispatch::Syslog'      => 0,
-       'Module::MultiConf'          => 0,
-       'Net::Netmask'               => 0,
-       'Readonly'                   => 0,
-       'Regexp::Common'             => 0,
-       'SNMP'                       => 0,
-       'SNMP::Effective'            => '1.04',
-       'Time::HiRes'                => 0,
-    }, # e.g., Module::Name => 1.1
+use inc::Module::Install 0.67;
+perl_version '5.008001';
+  
+name        'YATG';
+all_from    'script/yatg_updater';
 
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'usr/bin/yatg_updater', # retrieve abstract from module
-       AUTHOR         => 'Oliver Gorwits <oliver.gorwits@oucs.ox.ac.uk>') : ()),
+install_script  'yatg_updater';
 
-    dist        => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean       => { FILES => 'YATG-*' },
-    realclean   => { FILES => 'Makefile.old' },
-    EXE_FILES   => [ 'usr/bin/yatg_updater' ],
-);
+requires    'Class::Data::Inheritable' => 0;
+requires    'DBI' => 0;
+requires    'Log::Dispatch::Syslog' => 0;
+requires    'Module::MultiConf' => 0;
+requires    'Net::Netmask' => 0;
+requires    'Readonly' => 0;
+requires    'Regexp::Common' => 0;
+requires    'SNMP' => 0;
+requires    'SNMP::Effective' => 1.04;
+requires    'Time::HiRes' => 0;
+
+test_requires  'Test::More' => 0;
+test_requires  'Test::Pod' => 0;
+test_requires  'Test::Pod::Coverage' => 0;
+
+WriteAll;
+
