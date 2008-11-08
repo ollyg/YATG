@@ -17,6 +17,10 @@ requires    'SNMP' => 0;
 requires    'SNMP::Effective' => 1.04;
 requires    'Time::HiRes' => 0;
 
+recommends  'Cache::Memcached' => 0;
+recommends  'RPC::Serialized::Handler' => 0;
+recommends  'Tie::File::FixedRecLen::Store' => 0;
+
 test_requires  'Test::More' => 0;
 test_requires  'Test::Pod' => 0;
 test_requires  'Test::Pod::Coverage' => 0;
