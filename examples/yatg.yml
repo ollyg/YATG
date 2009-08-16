@@ -8,8 +8,8 @@ yatg:
         "ifInErrors":           [ifindex, memcached, diff]
         "ifOutErrors":          [ifindex, memcached, diff]
         "ifAdminStatus":        [ifindex, memcached]
-        "ifOperStatus":         [ifindex, memcached]
-        "ifAlias":              [ifindex, memcached]
+        "ifOperStatus":         [ifindex, memcached, nsca]
+        "ifAlias":              [ifindex, memcached, nsca]
         "dot1dStpPortState":    [ifindex, disk, "192.2.1.10", "!192.1.1.0/24"]
     communities: [public, anotherone]
     dbi_connect:
@@ -26,4 +26,7 @@ rpc_serialized_client_inet:
         PeerPort: 1558
         Proto:    tcp
         Timeout:  3
+nsca:
+    nsca_server: 127.0.0.1
+    ignore_descr: '(?i-xsm:\[DNM\]|DRAX|Meter|SPAN|CCTV)'
 

@@ -17,7 +17,6 @@ sub store {
     my $send_nsca_cmd = &find_command($config, 'send_nsca');
     my $send_nsca_cfg = $config->{nsca}->{config_file};
     my $service_name  = $config->{nsca}->{service_name};
-    my $echo_cmd      = &find_command($config, 'echo');
 
     my $nsca_server = $config->{nsca}->{nsca_server}
         or die "Must specify an nsca server in configuration.\n";
@@ -141,14 +140,75 @@ YATG::Store::NSCA - Back-end module to send polled data to a Nagios service
 
 =head1 DESCRIPTION
 
+This module checks for device ports which are administratively enabled, but
+which are showing not connected to anything, at the time of polling. A Nagios
+CRITICAL result will be generated for such ports.
+
+Only one check result per device is submitted (i.e. I<not> one result per
+port). If there are multiple ports in an alarm state on the same device, then
+they will all be mentioned in the single service check report.
+
+When all enabled ports are connected, an OK result is returned.
+
 =head1 CONFIGURATION
 
-In the main C<yatg_updater> configuration, you must provide details of the
-location of your Nagios NSCA server. Follow the example (C<yatg.yml>) file in
-this distribution.
+At a minimum, you must provide details of the location of your Nagios NSCA
+server, in the main configuration file:
 
  nsca:
-     nsca_server: '1.2.3.4'
+     nsca_server: '192.0.2.1'
+
+In your YATG configuration file, you must also include this store module on
+the OIDs required to generate a check result:
+
+ oids:
+     "ifOperStatus":   [ifindex, nsca]
+     "ifAlias":        [ifindex, nsca]
+
+=head2 Optional Configuration
+
+You can also supply the following settings in the main configuration file to
+override builtin defaults, like so:
+
+ nsca:
+     send_nsca_cmd: '/usr/bin/send_nsca'
+     config_file:   '/etc/send_nsca.cfg'
+     ignore_ports:  '^(?:Vlan|Po)\d+$'
+     ignore_descr:  '(?:SPAN)'
+     service_name:  'Interfaces Status'
+
+=over 4
+
+=item C<send_nsca_cmd>
+
+The location of the C<send_nsca> command on your system. YATG will default to
+searching for C<send_nsca> in the application's current PATH.
+
+=item C<config_file>
+
+The location of the configuration file for the C<send_nsca> program. This
+defaults to C</etc/send_nsca.cfg>.
+
+=item C<ignore_ports>
+
+Device port names (OID C<ifDescr>) to skip when submitting results. This
+defaults to anything like a Vlan interface, or Cisco PortChannel. Supply the
+content of a Perl regular expression, as in the example above.
+
+=item C<ignore_descr>
+
+Device port description fields matching this value cause the port to be
+skipped when submitting results. This defaults to anything containing the word
+"SPAN". Supply the content of a Perl regular expression, as in the example
+above.
+
+=item C<service_name>
+
+The Nagios Service Check name to use when submitting results. This must match
+the configured name on your Nagios server, and defaults to "Interfaces
+Status".
+
+=back
 
 =head1 SEE ALSO
 

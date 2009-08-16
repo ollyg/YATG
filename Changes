@@ -1,3 +1,11 @@
+yatg (3.01) UNRELEASED; urgency=low
+
+  * yatg_updater now retrieves (new) list of devices on each poll run
+  * can now have multiple store backends per OID
+  * new store backend NSCA for submitting passive Nagios service check results
+
+ -- Oliver Gorwits <oliver.gorwits@oucs.ox.ac.uk>  Sun, 16 Aug 2009 11:24:09 +0100
+
 yatg (2.0.1-1) UNRELEASED; urgency=low
 
   * Move to Module::Install
