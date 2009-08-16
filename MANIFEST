@@ -23,6 +23,7 @@ lib/YATG/Retrieve/RPC.pm
 lib/YATG/SharedStorage.pm
 lib/YATG/Store/Disk.pm
 lib/YATG/Store/Memcached.pm
+lib/YATG/Store/NSCA.pm
 lib/YATG/Store/RPC.pm
 lib/YATG/Store/STDOUT.pm
 lib/YATG/Tutorial.pod
