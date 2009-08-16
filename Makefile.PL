@@ -25,5 +25,10 @@ test_requires  'Test::More' => 0;
 test_requires  'Test::Pod' => 0;
 test_requires  'Test::Pod::Coverage' => 0;
 
+resources 'IRC'         => 'irc://irc.perl.org/#miltonkeynes.pm';
+resources 'license'     => 'http://dev.perl.org/licenses/';
+resources 'repository'  => 'http://yatg.git.sourceforge.net/';
+resources 'MailingList' => 'https://lists.sourceforge.net/lists/listinfo/yatg-users';
+
 WriteAll;
 
