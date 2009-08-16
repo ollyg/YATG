@@ -41,6 +41,15 @@ __PACKAGE__->Validate({
         callbacks => { type => CODEREF | ARRAYREF,
                             default => sub { return "$_[1]\n" } },
     },
+    nsca => {
+        nsca_server   => { type => SCALAR },
+        send_nsca_cmd => { type => SCALAR, optional => 1 },
+        echo_cmd      => { type => SCALAR, optional => 1 },
+        ignore_ports  => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
+        ignore_descr  => { type => SCALAR, default => '(?:SPAN)' },
+        config_file   => { type => SCALAR, default => '/etc/send_nsca.cfg' },
+        service_name  => { type => SCALAR, default => 'Interfaces Status' },
+    },
 });
 
 1;

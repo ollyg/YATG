@@ -3,8 +3,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-our $VERSION = '2.0001';
-$VERSION = eval $VERSION; # numify for warning-free dev releases
+our $VERSION = '2.0000';
 
 use YATG::SharedStorage;
 YATG::SharedStorage->factory(qw(cache results));
@@ -41,14 +40,16 @@ sub to_log {
     my $msg = shift;
     return unless $msg;
 
+    print STDERR $msg if $DEBUG;
     $msg =~ s/^/[$$] /gm;
+
     $logger->log(
         level => $config->log_dispatch_syslog->{'min_level'},
         message => $msg
     );
 }
 
-Readonly my @modules => qw( Disk RPC Memcached STDOUT );
+Readonly my @modules => qw( Disk RPC Memcached NSCA STDOUT );
 Readonly my @basic_oids => (
         'ifDescr'       => '.1.3.6.1.2.1.2.2.1.2',
         'ifAdminStatus' => '.1.3.6.1.2.1.2.2.1.7',
@@ -75,18 +76,19 @@ my $action = POSIX::SigAction->new(
 POSIX::sigaction(&POSIX::SIGHUP, $action);
 
 sub hup_handler {
-    to_log("SIGHUP received, restarting...\n") if ! $DEBUG;
+    to_log("SIGHUP received, restarting...\n");
     exec ($SELF, @ARGV) or die "Couldn't restart $0: $!\n";
 } # thanks go to perlipc man page for this
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # rebuild device cache (also on sigHUP)
+to_log("YATG Loaded.\n") if $DEBUG;
 
 # list of all device ips
 my $dbh = DBI->connect(
     @{$config->yatg->{'dbi_connect'}},
     {PrintError => 1, RaiseError => 1, AutoCommit => 1}
-);
+) or die $DBI::errstr;
 
 $cache->{devices} = $dbh->selectcol_arrayref(
     $config->yatg->{'dbi_ip_query'});
@@ -105,52 +107,89 @@ foreach my $leaf (keys %{$config->yatg->{'oids'}}) {
     $cache->{oids}->{$leaf}->{diff} = $tokens{diff} ? 1 : 0;
 
     # store module to load
-    $cache->{oids}->{$leaf}->{store} =
-        $modhash{ (grep {$modhash{$_}} keys %tokens)[0] };
-    push @to_load, $cache->{oids}->{$leaf}->{store};
+    my (%union, %isect);
+    foreach my $e (keys %modhash, keys %tokens) { $union{$e}++ && $isect{$e}++ }
+    my @store_list = keys %isect;
+
+    $cache->{oids}->{$leaf}->{store_list} = [ map {$modhash{$_}} @store_list ];
+    push @to_load, @{$cache->{oids}->{$leaf}->{store_list}};
 
     # transate leaf to OID
     $cache->{oid_for}->{$leaf} = SNMP::translateObj($leaf)
         or die "Failed to translate leaf $leaf to OID\n";
+}
 
-    my $oid = $cache->{oid_for}->{$leaf};
-    $cache->{leaf_for}->{ $oid } = $leaf;
+sub prime_cache {
+    foreach my $leaf (keys %{$config->yatg->{'oids'}}) {
+        my %tokens = map {lc($_) => 1} @{$config->yatg->{'oids'}->{$leaf}};
 
-    # prune IPs for each OID
-    my @nets_incl = grep {$_ = Net::Netmask->new2($_)}
-                    grep {m#^$RE{net}{IPv4}(?:/\d+)?$#} keys %tokens;
-    my @nets_excl = grep {$_ = Net::Netmask->new2($_)}
-                    grep {m#^!$RE{net}{IPv4}(?:/\d+)?$#} keys %tokens;
+        my $oid = $cache->{oid_for}->{$leaf};
+        $cache->{leaf_for}->{ $oid } = $leaf;
 
-    if (scalar @nets_incl == 0 and scalar @nets_excl == 0) {
-        # short-circuit
-        map { $cache->{get_for}->{$_}->{ $oid } = 1 }
-            @{$cache->{devices}};
-    }
-    else {
-        foreach my $ip (@{$cache->{devices}}) {
-            $cache->{get_for}->{$ip}->{ $oid } = 1
-                if  ((scalar grep { $_->match($ip) } @nets_incl) > 0
-                     and (scalar grep { $_->match($ip) } @nets_excl) == 0)
-                or  (scalar @nets_incl == 0
-                     and (scalar grep { $_->match($ip) } @nets_excl) == 0);
+        # prune IPs for each OID
+        my @nets_incl = grep {$_ = Net::Netmask->new2($_)}
+                        grep {m#^$RE{net}{IPv4}(?:/\d+)?$#} keys %tokens;
+        my @nets_excl = grep {$_ = Net::Netmask->new2($_)}
+                        grep {m#^!$RE{net}{IPv4}(?:/\d+)?$#} keys %tokens;
+
+        if (scalar @nets_incl == 0 and scalar @nets_excl == 0) {
+            # short-circuit
+            map { $cache->{get_for}->{$_}->{ $oid } = 1 }
+                @{$cache->{devices}};
+        }
+        else {
+            foreach my $ip (@{$cache->{devices}}) {
+                $cache->{get_for}->{$ip}->{ $oid } = 1
+                    if  ((scalar grep { $_->match($ip) } @nets_incl) > 0
+                        and (scalar grep { $_->match($ip) } @nets_excl) == 0)
+                    or  (scalar @nets_incl == 0
+                        and (scalar grep { $_->match($ip) } @nets_excl) == 0);
+            }
+        }
+
+        # indexed oid?
+        if ($tokens{ifindex}) {
+            $cache->{oids}->{$leaf}->{indexer} = 'iid';
+            foreach my $ip (
+                grep { exists $cache->{get_for}->{$_}->{ $oid } }
+                    @{$cache->{devices}} ) {
+
+                $cache->{get_for}->{$ip}->{ $cache->{oid_for}->{ifDescr} } = 1;
+                $cache->{get_for}->{$ip}->{ $cache->{oid_for}->{ifAdminStatus} } = 1;
+                $cache->{$ip}->{build_ifindex} = 1;
+            }
+        }
+        else {
+            $cache->{oids}->{$leaf}->{indexer} = 0;
         }
     }
+}
 
-    # indexed oid?
-    if ($tokens{ifindex}) {
-        $cache->{oids}->{$leaf}->{indexer} = 'iid';
-        foreach my $ip (
-            grep { exists $cache->{get_for}->{$_}->{ $oid } }
-                 @{$cache->{devices}} ) {
+sub get_community {
+    my $ip = shift;
 
-            $cache->{get_for}->{$ip}->{ $cache->{oid_for}->{ifDescr} } = 1;
-            $cache->{get_for}->{$ip}->{ $cache->{oid_for}->{ifAdminStatus} } = 1;
-            $cache->{$ip}->{build_ifindex} = 1;
-        }
+    # shortcut if there is only one community supplied
+    if (scalar @{$config->yatg->{'communities'}} == 1) {
+        $cache->{community_for}->{$ip}
+            = $config->yatg->{'communities'}->[0];
+        return;
     }
-    else {
-        $cache->{oids}->{$leaf}->{indexer} = 0;
+
+    foreach my $c (@{$config->yatg->{'communities'}}) {
+        my $sess = SNMP::Session->new(
+            DestHost  => $ip,
+            Version   => 1,
+            Timeout   => 10000,
+            Community => $c,
+        );
+        my $val = $sess->get('sysUpTime.0');
+
+        # failure, go to next community
+        next if !$val or $sess->{ErrorNum} or $sess->{ErrorStr};
+
+        # success, use this community and go to next device
+        $cache->{community_for}->{$ip} = $c;
+        last;
     }
 }
 
@@ -170,34 +209,23 @@ if (scalar @{$config->yatg->{'communities'}} == 1) {
 }
 else {
     foreach my $ip (@{$cache->{devices}}) {
-        foreach my $c (@{$config->yatg->{'communities'}}) {
-            my $sess = SNMP::Session->new(
-                DestHost  => $ip,
-                Version   => 1,
-                Timeout   => 10000,
-                Community => $c,
-            );
-            my $val = $sess->get('sysUpTime.0');
-    
-            # failure, go to next community
-            next if !$val or $sess->{ErrorNum} or $sess->{ErrorStr};
-    
-            # success, use this community and go to next device
-            $cache->{community_for}->{$ip} = $c;
-            last;
-        }
+        &get_community($ip);
     }
 }
 
-to_log("Cache rebuild took ". (time - $^T) ." seconds.\n") if ! $DEBUG;
-print "Cache rebuild took ". (time - $^T) ." seconds.\n" if $DEBUG;
+to_log("Cache rebuild took ". (time - $^T) ." seconds.\n");
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 while (1) {
     my $naptime = $INTERVAL - (time % $INTERVAL);
-    print "Sleeping for $naptime seconds...\n" if $DEBUG;
+    to_log("Sleeping for $naptime seconds...\n") if $DEBUG;
     sleep $naptime;
+
+    # refresh known devices
+    to_log("Priming cache... ") if $DEBUG;
+    &prime_cache;
+    to_log("done!\n") if $DEBUG;
 
     my $se = SNMP::Effective->new(
         MaxSessions   => $POLLERS,
@@ -205,8 +233,14 @@ while (1) {
     );  
 
     foreach my $ip (@{$cache->{devices}}) {
-        next unless exists $cache->{community_for}->{$ip};
         next unless scalar (keys %{$cache->{get_for}->{$ip}}) > 0;
+
+        # "new" device, find the community
+        if (!exists $cache->{community_for}->{$ip}) {
+            to_log("Possible new device [$ip].\n") if $DEBUG;
+            &get_community($ip);
+            next unless exists $cache->{community_for}->{$ip};
+        }
 
         $se->add(
             DestHost => $ip,
@@ -221,8 +255,7 @@ while (1) {
 
     my $exec = time;
     $se->execute;
-    to_log("Execute run took ". (time - $exec) ." seconds.\n") if ! $DEBUG;
-    print "Execute run took ". (time - $exec) ." seconds.\n" if $DEBUG;
+    to_log("Execute run took ". (time - $exec) ." seconds.\n");
 
     my $update = time;
     my $stamp = floor($update - ($update % $INTERVAL));
@@ -234,8 +267,7 @@ while (1) {
             ({%$config}, $stamp, $results->{$mod});
     }
 
-    to_log("Remote update took ". (time - $update) ." seconds.\n") if ! $DEBUG;
-    print "Remote update took ". (time - $update) ." seconds.\n" if $DEBUG;
+    to_log("Remote update took ". (time - $update) ." seconds.\n");
 
     $results = YATG::SharedStorage->results({});
     last if $ENV{YATG_SINGLE_RUN};
@@ -250,7 +282,7 @@ YATG - Fast SNMP data poller daemon, with storage and graphing
 
 =head1 VERSION
 
-This document refers to version 2.0001 of YATG
+This document refers to version 2.0000 of YATG
 
 =head1 DESCRIPTION
 
@@ -431,9 +463,18 @@ Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) The University of Oxford 2008.
+Copyright (c) The University of Oxford 2007. All Rights Reserved.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it under
+the terms of version 2 of the GNU General Public License as published by the
+Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 =cut

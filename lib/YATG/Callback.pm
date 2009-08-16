@@ -10,7 +10,7 @@ use vars qw(@EXPORT_OK);
 use base 'Exporter';
 @EXPORT_OK = qw(snmp_callback);
 
-Readonly my $ifignore => qr/stack|null|channel|unrouted|eobc|netflow|loopback/i;
+Readonly my $ifignore => qr/stack|null|channel|unrouted|eobc|netflow|loopback|plane/i;
 
 sub snmp_callback {
     my ($host, $error) = @_;
@@ -43,8 +43,8 @@ sub snmp_callback {
 
     foreach my $oid (keys %$data) {
         my $leaf  = $cache->{leaf_for}->{$oid};
-        my $store = $cache->{oids}->{$leaf}->{store};
-        next if !defined $store;
+        my $store_list = $cache->{oids}->{$leaf}->{store_list};
+        next if !defined $store_list or scalar @$store_list == 0;
 
         # only a hint, as some INTEGERs are not enumerated types
         my $enum = SNMP::getType($leaf) eq 'INTEGER' ? 1 : 0;
@@ -56,9 +56,11 @@ sub snmp_callback {
                 my $enum_val = SNMP::mapEnum($leaf, $data->{$oid}->{$iid})
                     if $enum;
 
-                $results->{$store}->{$host}->{$leaf}
-                    ->{$data->{$descr}->{$iid}} = ($enum and defined $enum_val)
-                        ? $enum_val : $data->{$oid}->{$iid};
+                foreach my $store (@$store_list) {
+                    $results->{$store}->{$host}->{$leaf}
+                        ->{$data->{$descr}->{$iid}} = ($enum and defined $enum_val)
+                            ? $enum_val : $data->{$oid}->{$iid};
+                } # store
             }
         }
         else {
@@ -66,9 +68,11 @@ sub snmp_callback {
                 my $enum_val = SNMP::mapEnum($leaf, $data->{$oid}->{$id})
                     if $enum;
 
-                $results->{$store}->{$host}->{$leaf}->{$id}
-                    = ($enum and defined $enum_val)
-                        ? $enum_val : $data->{$oid}->{$id};
+                foreach my $store (@$store_list) {
+                    $results->{$store}->{$host}->{$leaf}->{$id}
+                        = ($enum and defined $enum_val)
+                            ? $enum_val : $data->{$oid}->{$id};
+                } # store
             }
         }
     }
