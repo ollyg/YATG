@@ -3,7 +3,8 @@
 use strict;
 use warnings FATAL => 'all';
 
-our $VERSION = '2.0000';
+our $VERSION = '3.01';
+$VERSION = eval $VERSION; # numify for warning-free dev releases
 
 use YATG::SharedStorage;
 YATG::SharedStorage->factory(qw(cache results));
@@ -280,10 +281,6 @@ __END__
 
 YATG - Fast SNMP data poller daemon, with storage and graphing
 
-=head1 VERSION
-
-This document refers to version 2.0000 of YATG
-
 =head1 DESCRIPTION
 
 YATG is an application which is intended to be run persistently. At intervals
@@ -291,24 +288,15 @@ it will wake up and poll network devices for SNMP data, and then store or
 print that data. In this distribution are also included examples for
 presenting simple CGI web pages with graphs.
 
-Please understand that YATG is probably not going to be a plug-and-play system
-for you. We took the decision to generalize the code as much as possible, and
-release it, in the hope that other network systems administrators might find
-our solutions to these problems interesting, and maybe provide feedback.
-
-However, YATG is flexible and powerful. It can poll a large number of devices
-with thousands of ports in just a few seconds. The configuration is very
-simple, and the defaults sane (it's designed for sysadmins, after all).
+YATG is flexible, efficient and powerful. It can poll a large number of
+devices with thousands of ports in just a few seconds. The configuration is
+very simple, and the defaults sane (it's designed for sysadmins, after all).
 
 You can use YATG both for historical logging, such as traffic counters on
 ports, as well as short-term monitoring which might feed into, say, Nagios.
 Wherever possible, data is translated to human-friendly formats for storage,
 such as using Leaf Names instead of OIDs, translated values (C<up>, C<down>,
 etc) and device port names rather than SNMP Interface Indexes.
-
-One final thing; YATG works well for us, but might not for you. We know that
-the code is rough in places. Take this distribution as a proof of concept, and
-please send patches, comments and suggestions to the email address below.
 
 =head1 How Does It Work?
 
