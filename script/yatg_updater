@@ -3,7 +3,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-our $VERSION = '3.01';
+our $VERSION = '3.02';
 $VERSION = eval $VERSION; # numify for warning-free dev releases
 
 use YATG::SharedStorage;

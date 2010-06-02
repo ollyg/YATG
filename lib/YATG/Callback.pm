@@ -10,7 +10,7 @@ use vars qw(@EXPORT_OK);
 use base 'Exporter';
 @EXPORT_OK = qw(snmp_callback);
 
-Readonly my $ifignore => qr/stack|null|channel|unrouted|eobc|netflow|loopback|plane/i;
+Readonly my $ifignore => qr/stack|null|span|unrouted|eobc|netflow|loopback|plane/i;
 
 sub snmp_callback {
     my ($host, $error) = @_;

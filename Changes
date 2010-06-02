@@ -1,3 +1,9 @@
+yatg (3.02) UNRELEASED; urgency=low
+
+  * alter ignored interfaces list when storing data not to exclude port-channels
+
+ -- Oliver Gorwits <oliver.gorwits@oucs.ox.ac.uk>  Wed, 02 Jun 2010 11:51:01 +0100
+
 yatg (3.01) UNRELEASED; urgency=low
 
   * yatg_updater now retrieves (new) list of devices on each poll run
