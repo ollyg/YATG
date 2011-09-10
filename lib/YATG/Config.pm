@@ -42,11 +42,11 @@ __PACKAGE__->Validate({
                             default => sub { return "$_[1]\n" } },
     },
     nsca => {
-        nsca_server   => { type => SCALAR },
-        send_nsca_cmd => { type => SCALAR, optional => 1 },
+        nsca_server   => { type => SCALAR, optional => 1 },
+        send_nsca_cmd => { type => SCALAR, default => '/usr/bin/send_nsca' },
+        config_file   => { type => SCALAR, default => '/etc/send_nsca.cfg' },
         ignore_ports  => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
         ignore_descr  => { type => SCALAR, default => '(?:SPAN)' },
-        config_file   => { type => SCALAR, default => '/etc/send_nsca.cfg' },
         service_name  => { type => SCALAR, default => 'Interfaces Status' },
     },
 });
