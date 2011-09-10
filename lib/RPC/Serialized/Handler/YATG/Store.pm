@@ -13,11 +13,7 @@ sub invoke {
 
 1;
 
-__END__
-
-=head1 NAME
-
-RPC::Serialized::Handler::YATG::Store - RPC handler for YATG::Store::Disk
+# ABSTRACT: RPC handler for YATG::Store::Disk
 
 =head1 DESCRIPTION
 
@@ -55,16 +51,3 @@ server.
 =item L<RPC::Serialized>
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

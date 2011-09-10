@@ -274,12 +274,8 @@ while (1) {
     last if $ENV{YATG_SINGLE_RUN};
 }
 
-
-__END__
-
-=head1 NAME
-
-YATG - Fast SNMP data poller daemon, with storage and graphing
+# ABSTRACT: Fast SNMP data poller daemon, with storage and graphing
+# PODNAME: YATG
 
 =head1 DESCRIPTION
 
@@ -383,54 +379,6 @@ For example:
 
  YATG_DEBUG=1 YATG_SINGLE_RUN=1 /usr/bin/yatg_updater /etc/yatg.yml
 
-=head1 DEPENDENCIES
-
-The following modules are dependencies of the YATG system, in addition to the
-standard contents of the Perl distribution itself:
-
-=over 4
-
-=item L<Class::Data::Inheritable>
-
-=item L<DBI>
-
-=item L<Log::Dispatch::Syslog>
-
-=item L<Module::MultiConf>
-
-=item L<Net::Netmask>
-
-=item L<Readonly>
-
-=item L<Regexp::Common>
-
-=item L<SNMP>
-
-=item L<SNMP::Effective> (but not version 1.0)
-
-=item L<Time::HiRes>
-
-=back
-
-The following modules are optional, and allow you to use additional bundled
-features such as data storage, graphing, and so on:
-
-=over 4
-
-=item L<CGI>
-
-=item L<Cache::Memcached>
-
-=item L<RPC::Serialized>
-
-=item L<Tie::File::FixedRecLen>
-
-=item L<URI::Escape>
-
-=item L<perlchartdir>
-
-=back
-
 =head1 SEE ALSO
 
 =over 4
@@ -444,16 +392,3 @@ This system uses SNMP::Effective at its core do the polling.
 Store polled data on another server using RPC::Serialized.
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

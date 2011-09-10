@@ -1,3 +1,7 @@
+{{$NEXT}}
+
+  * Port to Dist::Zilla
+
 yatg (3.02) UNRELEASED; urgency=low
 
   * alter ignored interfaces list when storing data not to exclude port-channels

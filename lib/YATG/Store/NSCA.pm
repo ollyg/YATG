@@ -132,11 +132,7 @@ sub find_command {
 
 1;
 
-__END__
-
-=head1 NAME
-
-YATG::Store::NSCA - Back-end module to send polled data to a Nagios service
+# ABSTRACT: Back-end module to send polled data to a Nagios service
 
 =head1 DESCRIPTION
 
@@ -217,16 +213,3 @@ Status".
 =item Opsview at L<http://www.opsview.org>
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2009.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

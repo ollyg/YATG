@@ -66,11 +66,7 @@ sub retrieve {
 
 1;
 
-__END__
-
-=head1 NAME
-
-YATG::Retrieve::Disk - Retrieve a set of data stored by YATG::Store::Disk
+# ABSTRACT: Retrieve a set of data stored by YATG::Store::Disk
 
 =head1 DESCRIPTION
 
@@ -147,16 +143,3 @@ the data points you requested with start, end and step.
 =item L<Tie::File::FixedRecLen>
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

@@ -53,11 +53,7 @@ __PACKAGE__->Validate({
 
 1;
 
-__END__
-
-=head1 NAME
-
-YATG::Config - Configuration management for YATG
+# ABSTRACT: Configuration management for YATG
 
 =head1 REQUIRED CONFIGURATION
 
@@ -318,16 +314,3 @@ Here is an example of what you might do:
 =item L<http://www.sqlite.org/>
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

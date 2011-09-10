@@ -69,11 +69,7 @@ sub store {
 
 1;
 
-__END__
-
-=head1 NAME
-
-YATG::Store::Disk - Back-end module to store polled data to disk
+# ABSTRACT: Back-end module to store polled data to disk
 
 =head1 DESCRIPTION
 
@@ -132,16 +128,3 @@ to create files and directories and write to them in this location.
 =item L<Tie::File::FixedRecLen::Store>
 
 =back
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

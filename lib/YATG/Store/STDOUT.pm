@@ -16,11 +16,3 @@ sub store {
 }
 
 1;
-
-__END__
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
