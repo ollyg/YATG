@@ -1,6 +1,7 @@
 {{$NEXT}}
 
   * Make NSCA config optional (D. Walrond)
+  * Remove VERSION so that release is indexed properly
 
 4.112530  2011-09-10 12:42:15 Europe/London
 
