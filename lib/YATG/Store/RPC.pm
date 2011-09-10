@@ -1,6 +1,6 @@
 package YATG::Store::RPC;
 {
-  $YATG::Store::RPC::VERSION = '4.112530';
+  $YATG::Store::RPC::VERSION = '4.112532';
 }
 
 use strict;
@@ -41,7 +41,7 @@ YATG::Store::RPC - Back-end module to store polled data over the network
 
 =head1 VERSION
 
-version 4.112530
+version 4.112532
 
 =head1 DESCRIPTION
 

@@ -2,7 +2,7 @@ NAME
     YATG - Fast SNMP data poller daemon, with storage and graphing
 
 VERSION
-    version 4.112530
+    version 4.112532
 
 DESCRIPTION
     YATG is an application which is intended to be run persistently. At

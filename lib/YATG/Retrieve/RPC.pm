@@ -1,6 +1,6 @@
 package YATG::Retrieve::RPC;
 {
-  $YATG::Retrieve::RPC::VERSION = '4.112530';
+  $YATG::Retrieve::RPC::VERSION = '4.112532';
 }
 
 use strict;
@@ -41,7 +41,7 @@ YATG::Retrieve::RPC - Retrieve a set of polled data over the network
 
 =head1 VERSION
 
-version 4.112530
+version 4.112532
 
 =head1 DESCRIPTION
 

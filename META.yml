@@ -51,4 +51,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=YATG
   homepage: https://github.com/ollyg/YATG/wiki
   repository: git://github.com/ollyg/YATG.git
-version: 4.112530
+version: 4.112532

@@ -1,6 +1,6 @@
 package YATG::Store::Memcached;
 {
-  $YATG::Store::Memcached::VERSION = '4.112530';
+  $YATG::Store::Memcached::VERSION = '4.112532';
 }
 
 use strict;
@@ -71,7 +71,7 @@ YATG::Store::Memcached - Back-end module to store polled data to a Memcached
 
 =head1 VERSION
 
-version 4.112530
+version 4.112532
 
 =head1 DESCRIPTION
 
