@@ -1,4 +1,7 @@
 package RPC::Serialized::Handler::YATG::Retrieve;
+{
+  $RPC::Serialized::Handler::YATG::Retrieve::VERSION = '4.112530';
+}
 
 use strict;
 use warnings FATAL => 'all';
@@ -13,11 +16,19 @@ sub invoke {
 
 1;
 
+# ABSTRACT: RPC handler for YATG::Retrieve::Disk
+
+
 __END__
+=pod
 
 =head1 NAME
 
 RPC::Serialized::Handler::YATG::Retrieve - RPC handler for YATG::Retrieve::Disk
+
+=head1 VERSION
+
+version 4.112530
 
 =head1 DESCRIPTION
 
@@ -57,13 +68,14 @@ a web server.
 
 =head1 AUTHOR
 
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
+Oliver Gorwits <oliver@cpan.org>
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) The University of Oxford 2007.
+This software is copyright (c) 2011 by University of Oxford.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
+

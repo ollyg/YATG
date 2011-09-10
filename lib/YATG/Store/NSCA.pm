@@ -1,4 +1,7 @@
 package YATG::Store::NSCA;
+{
+  $YATG::Store::NSCA::VERSION = '4.112530';
+}
 
 use strict;
 use warnings FATAL => 'all';
@@ -132,11 +135,19 @@ sub find_command {
 
 1;
 
+# ABSTRACT: Back-end module to send polled data to a Nagios service
+
+
 __END__
+=pod
 
 =head1 NAME
 
 YATG::Store::NSCA - Back-end module to send polled data to a Nagios service
+
+=head1 VERSION
+
+version 4.112530
 
 =head1 DESCRIPTION
 
@@ -220,13 +231,14 @@ Status".
 
 =head1 AUTHOR
 
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
+Oliver Gorwits <oliver@cpan.org>
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) The University of Oxford 2009.
+This software is copyright (c) 2011 by University of Oxford.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
+

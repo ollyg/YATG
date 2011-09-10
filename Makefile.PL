@@ -1,34 +1,87 @@
-use inc::Module::Install 0.67;
-perl_version '5.008001';
-  
-name        'YATG';
-all_from    'script/yatg_updater';
 
-install_script  'yatg_updater';
+use strict;
+use warnings;
 
-requires    'Class::Data::Inheritable' => 0;
-requires    'DBI' => 0;
-requires    'Log::Dispatch::Syslog' => 0;
-requires    'Module::MultiConf' => 0;
-requires    'Net::Netmask' => 0;
-requires    'Readonly' => 0;
-requires    'Regexp::Common' => 0;
-requires    'SNMP' => 0;
-requires    'SNMP::Effective' => 1.04;
-requires    'Time::HiRes' => 0;
 
-recommends  'Cache::Memcached' => 0;
-recommends  'RPC::Serialized::Handler' => 0;
-recommends  'Tie::File::FixedRecLen::Store' => 0;
 
-test_requires  'Test::More' => 0;
-test_requires  'Test::Pod' => 0;
-test_requires  'Test::Pod::Coverage' => 0;
+use ExtUtils::MakeMaker 6.30;
 
-resources 'IRC'         => 'irc://irc.perl.org/#miltonkeynes.pm';
-resources 'license'     => 'http://dev.perl.org/licenses/';
-resources 'repository'  => 'http://yatg.git.sourceforge.net/';
-resources 'MailingList' => 'https://lists.sourceforge.net/lists/listinfo/yatg-users';
 
-WriteAll;
+
+my %WriteMakefileArgs = (
+  "ABSTRACT" => "Fast SNMP data poller daemon, with storage and graphing",
+  "AUTHOR" => "Oliver Gorwits <oliver\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Test::More" => 0
+  },
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
+  },
+  "DISTNAME" => "YATG",
+  "EXE_FILES" => [
+    "bin/yatg_updater"
+  ],
+  "LICENSE" => "perl",
+  "NAME" => "YATG",
+  "PREREQ_PM" => {
+    "Cache::Memcached" => 0,
+    "Class::Data::Inheritable" => 0,
+    "Config" => 0,
+    "DBI" => 0,
+    "Data::Dumper" => 0,
+    "Exporter" => 0,
+    "ExtUtils::MakeMaker" => 0,
+    "Fcntl" => 0,
+    "File::Basename" => 0,
+    "File::Spec" => 0,
+    "File::Spec::Functions" => 0,
+    "FindBin" => 0,
+    "Log::Dispatch::Syslog" => 0,
+    "Module::MultiConf" => "0.0301",
+    "Net::DNS" => 0,
+    "Net::Netmask" => 0,
+    "POSIX" => 0,
+    "RPC::Serialized::Client::INET" => 0,
+    "RPC::Serialized::Handler" => 0,
+    "Readonly" => 0,
+    "Regexp::Common" => 0,
+    "SNMP" => 0,
+    "SNMP::Effective" => 0,
+    "Symbol" => 0,
+    "Tie::File::FixedRecLen" => 0,
+    "Tie::File::FixedRecLen::Store" => 0,
+    "Time::HiRes" => 0,
+    "Time::Local" => 0,
+    "base" => 0,
+    "integer" => 0,
+    "strict" => 0,
+    "vars" => 0,
+    "warnings" => 0
+  },
+  "VERSION" => "4.112530",
+  "test" => {
+    "TESTS" => "t/*.t"
+  }
+);
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
 

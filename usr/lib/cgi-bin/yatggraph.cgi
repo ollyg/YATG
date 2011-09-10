@@ -187,11 +187,8 @@ $c->xAxis->setDateScale(
 print "Content-type: image/png\n\n";
 print $c->makeChart2($perlchartdir::PNG);
 
-__END__
-
-=head1 NAME
-
-yatggraph.cgi - CGI to make PNG of YATG polled port traffic data
+# ABSTRACT: CGI to make PNG of YATG polled port traffic data
+# PODNAME: yatggraph.cgi
 
 =head1 IMPORTANT NOTE
 
@@ -211,16 +208,5 @@ Please see the documentation for L<yatgview.cgi>.
 =head1 ACKNOWLEDGEMENTS
 
 This CGI is based upon the RTG CGIs by Anthony Tonns.
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
 
 =cut

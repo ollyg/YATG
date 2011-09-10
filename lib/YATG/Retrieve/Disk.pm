@@ -1,4 +1,7 @@
 package YATG::Retrieve::Disk;
+{
+  $YATG::Retrieve::Disk::VERSION = '4.112530';
+}
 
 use strict;
 use warnings FATAL => 'all';
@@ -66,11 +69,19 @@ sub retrieve {
 
 1;
 
+# ABSTRACT: Retrieve a set of data stored by YATG::Store::Disk
+
+
 __END__
+=pod
 
 =head1 NAME
 
 YATG::Retrieve::Disk - Retrieve a set of data stored by YATG::Store::Disk
+
+=head1 VERSION
+
+version 4.112530
 
 =head1 DESCRIPTION
 
@@ -150,13 +161,14 @@ the data points you requested with start, end and step.
 
 =head1 AUTHOR
 
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
+Oliver Gorwits <oliver@cpan.org>
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) The University of Oxford 2007.
+This software is copyright (c) 2011 by University of Oxford.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
+

@@ -1,4 +1,7 @@
 package RPC::Serialized::Handler::YATG::Store;
+{
+  $RPC::Serialized::Handler::YATG::Store::VERSION = '4.112530';
+}
 
 use strict;
 use warnings FATAL => 'all';
@@ -13,11 +16,19 @@ sub invoke {
 
 1;
 
+# ABSTRACT: RPC handler for YATG::Store::Disk
+
+
 __END__
+=pod
 
 =head1 NAME
 
 RPC::Serialized::Handler::YATG::Store - RPC handler for YATG::Store::Disk
+
+=head1 VERSION
+
+version 4.112530
 
 =head1 DESCRIPTION
 
@@ -42,7 +53,6 @@ distribution to help with that, e.g. C<rpc-serialized.server.yml>:
      user: daemon
      group: daemon
 
-
 You should head over to the RPC::Serialized documentation to learn how to set
 that up. We use a pre-forking L<Net::Server> based implementation to receive
 port traffic data and store to disk, then serve it back out to CGI on a web
@@ -58,13 +68,14 @@ server.
 
 =head1 AUTHOR
 
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
+Oliver Gorwits <oliver@cpan.org>
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) The University of Oxford 2007.
+This software is copyright (c) 2011 by University of Oxford.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
+

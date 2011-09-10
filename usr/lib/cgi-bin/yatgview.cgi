@@ -91,11 +91,8 @@ print hr;
 print $output;
 print end_html;
 
-__END__
-
-=head1 NAME
-
-yatgview.cgi - CGI to display graphs of YATG polled port traffic data
+# ABSTRACT: CGI to display graphs of YATG polled port traffic data
+# PODNAME: yatgview.cgi
 
 =head1 IMPORTANT NOTE
 
@@ -249,16 +246,5 @@ good value for money.
 =head1 ACKNOWLEDGEMENTS
 
 This CGI is based upon the RTG CGIs by Anthony Tonns.
-
-=head1 AUTHOR
-
-Oliver Gorwits C<< <oliver.gorwits@oucs.ox.ac.uk> >>
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) The University of Oxford 2007.
-
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
 
 =cut

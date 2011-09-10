@@ -1,6 +1,9 @@
 NAME
     YATG - Fast SNMP data poller daemon, with storage and graphing
 
+VERSION
+    version 4.112530
+
 DESCRIPTION
     YATG is an application which is intended to be run persistently. At
     intervals it will wake up and poll network devices for SNMP data, and
@@ -93,31 +96,6 @@ LOGGING and TESTING
 
      YATG_DEBUG=1 YATG_SINGLE_RUN=1 /usr/bin/yatg_updater /etc/yatg.yml
 
-DEPENDENCIES
-    The following modules are dependencies of the YATG system, in addition
-    to the standard contents of the Perl distribution itself:
-
-    Class::Data::Inheritable
-    DBI
-    Log::Dispatch::Syslog
-    Module::MultiConf
-    Net::Netmask
-    Readonly
-    Regexp::Common
-    SNMP
-    SNMP::Effective (but not version 1.0)
-    Time::HiRes
-
-    The following modules are optional, and allow you to use additional
-    bundled features such as data storage, graphing, and so on:
-
-    CGI
-    Cache::Memcached
-    RPC::Serialized
-    Tie::File::FixedRecLen
-    URI::Escape
-    perlchartdir
-
 SEE ALSO
     SNMP::Effective
         This system uses SNMP::Effective at its core do the polling.
@@ -126,11 +104,11 @@ SEE ALSO
         Store polled data on another server using RPC::Serialized.
 
 AUTHOR
-    Oliver Gorwits "<oliver.gorwits@oucs.ox.ac.uk>"
+    Oliver Gorwits <oliver@cpan.org>
 
-COPYRIGHT & LICENSE
-    Copyright (c) The University of Oxford 2007.
+COPYRIGHT AND LICENSE
+    This software is copyright (c) 2011 by University of Oxford.
 
-    This library is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
 
