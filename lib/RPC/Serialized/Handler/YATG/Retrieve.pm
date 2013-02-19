@@ -15,6 +15,34 @@ sub invoke {
 
 # ABSTRACT: RPC handler for YATG::Retrieve::Disk
 
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<RPC::Serialized>
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
+
 =head1 DESCRIPTION
 
 This module implements an L<RPC::Serialized> handler for

@@ -68,6 +68,30 @@ sub retrieve {
 
 # ABSTRACT: Retrieve a set of data stored by YATG::Store::Disk
 
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
+
 =head1 DESCRIPTION
 
 You can load this module to retrieve a set of data which has previously been

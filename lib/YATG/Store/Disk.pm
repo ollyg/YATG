@@ -71,6 +71,30 @@ sub store {
 
 # ABSTRACT: Back-end module to store polled data to disk
 
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
+
 =head1 DESCRIPTION
 
 This module implements part of a callback handler used to store SNMP data to
