@@ -7,7 +7,7 @@ sub store {
     my ($config, $stamp, $results) = @_;
     my $ignore_ports  = $config->{nsca}->{ignore_ports};
     my $ignore_descr  = $config->{nsca}->{ignore_descr};
-    my $send_nsca_cmd = &find_command($config, 'send_nsca');
+    my $send_nsca_cmd = $config->{nsca}->{send_nsca_cmd};
     my $send_nsca_cfg = $config->{nsca}->{config_file};
     my $service_name  = $config->{nsca}->{service_name};
 
@@ -75,34 +75,6 @@ sub store {
     return 1;
 }
 
-sub find_command {
-    my ($config, $command) = @_;
-    my $key = $command . '_cmd';
-
-    return $config->{nsca}->{$key} if
-        exists $config->{nsca}->{$key}
-        and defined $config->{nsca}->{$key};
-
-    use Config;
-    require File::Spec;
-    require ExtUtils::MakeMaker;
-
-    if( File::Spec->file_name_is_absolute($command) ) {
-        return MM->maybe_command($command);
-    }
-    else {
-        for my $dir (
-            (split /\Q$Config{path_sep}\E/, $ENV{PATH}),
-            File::Spec->curdir
-        ) {           
-            my $abs = File::Spec->catfile($dir, $command);
-            return $abs if $abs = MM->maybe_command($abs);
-        }
-    }
-
-    die "Could not find command [$command] in path\n";
-}
-
 1;
 
 # ABSTRACT: Back-end module to send polled data to a Nagios service
@@ -151,7 +123,8 @@ override builtin defaults, like so:
 =item C<send_nsca_cmd>
 
 The location of the C<send_nsca> command on your system. YATG will default to
-searching for C<send_nsca> in the application's current PATH.
+C</usr/bin/send_nsca> and if you supply a value it must be a fully qualified
+path.
 
 =item C<config_file>
 
