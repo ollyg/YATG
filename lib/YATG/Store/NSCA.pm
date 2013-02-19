@@ -3,15 +3,8 @@ package YATG::Store::NSCA;
 use strict;
 use warnings FATAL => 'all';
 
-use YATG::SharedStorage;
-YATG::SharedStorage->factory(qw(dns_cache));
-
-use Net::DNS;
-use Regexp::Common 'net';
-
 sub store {
     my ($config, $stamp, $results) = @_;
-    my $dns_cache = YATG::SharedStorage->dns_cache;
     my $ignore_ports  = $config->{nsca}->{ignore_ports};
     my $ignore_descr  = $config->{nsca}->{ignore_descr};
     my $send_nsca_cmd = &find_command($config, 'send_nsca');
@@ -30,8 +23,7 @@ sub store {
         foreach my $leaf (keys %{$results->{$device}}) {
             foreach my $port (keys %{$results->{$device}->{$leaf}}) {
 
-                my $host = 
-                    $dns_cache->{$device} || &get_hostname_for($device) || next;
+                my $host = $device || next;
                 $status->{$host}->{$port}->{$leaf} = $results->{$device}->{$leaf}->{$port};
             } # port
         } # leaf
@@ -81,25 +73,6 @@ sub store {
     open STDOUT, '>&', $oldout or die "Can't dup \$oldout: $!";
 
     return 1;
-}
-
-# get hostname for ip
-sub get_hostname_for {
-    my $device = shift;
-    return $device if $device !~ m/^$RE{net}{IPv4}$/;
-
-    my $res   = Net::DNS::Resolver->new;
-    my $query = $res->search($device);
-
-    my $hostname = $device; 
-    if ($query) {
-        foreach my $rr ($query->answer) {
-            next unless $rr->type eq 'PTR';
-            $hostname = $rr->ptrdname;
-            last;
-        }
-    }
-    return $hostname;
 }
 
 sub find_command {
