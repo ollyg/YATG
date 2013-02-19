@@ -5,11 +5,11 @@ use warnings FATAL => 'all';
 
 sub store {
     my ($config, $stamp, $results) = @_;
-    my $ignore_ports  = $config->{nsca}->{ignore_ports};
-    my $ignore_descr  = $config->{nsca}->{ignore_descr};
-    my $send_nsca_cmd = $config->{nsca}->{send_nsca_cmd};
-    my $send_nsca_cfg = $config->{nsca}->{config_file};
-    my $service_name  = $config->{nsca}->{service_name};
+    my $ignore_ports   = $config->{nsca}->{ignore_ports};
+    my $ignore_descr   = $config->{nsca}->{ignore_descr};
+    my $send_nsca_cmd  = $config->{nsca}->{send_nsca_cmd};
+    my $send_nsca_cfg  = $config->{nsca}->{config_file};
+    my $service_prefix = $config->{nsca}->{service_prefix};
 
     my $nsca_server = $config->{nsca}->{nsca_server}
         or die "Must specify an nsca server in configuration.\n";
@@ -18,13 +18,12 @@ sub store {
     #   $results->{device}->{leaf}->{port} = {value}
 
     my $status = {};
-    # build $status->{host}->{port}->{descr => '', state => ''}
+    # build $status->{host}->{port}->{leaf => 'value'}
     foreach my $device (keys %$results) {
         foreach my $leaf (keys %{$results->{$device}}) {
             foreach my $port (keys %{$results->{$device}->{$leaf}}) {
-
-                my $host = $device || next;
-                $status->{$host}->{$port}->{$leaf} = $results->{$device}->{$leaf}->{$port};
+                $status->{$device}->{$port}->{$leaf}
+                    = $results->{$device}->{$leaf}->{$port};
             } # port
         } # leaf
     } # device
@@ -48,8 +47,13 @@ sub store {
         foreach my $port (keys %{$status->{$host}}) {
             next if $port =~ m/$ignore_ports/;
 
-            my $ifOperStatus = $status->{$host}->{$port}->{ifOperStatus} || next;
-            my $ifAlias      = $status->{$host}->{$port}->{ifAlias}      || '';
+            my $ifOperStatus = $status->{$host}->{$port}->{ifOperStatus};
+            my $ifInErrors   = $status->{$host}->{$port}->{ifInErrors};
+            my $ifInDiscards = $status->{$host}->{$port}->{ifInDiscards};
+
+            next unless ($ifOperStatus or $ifInErrors or $ifInDiscards);
+
+            my $ifAlias = $status->{$host}->{$port}->{ifAlias} || '';
             next if length $ifAlias and $ifAlias =~ m/$ignore_descr/;
 
             if ($ifOperStatus ne 'up') {
@@ -116,7 +120,7 @@ override builtin defaults, like so:
      config_file:   '/etc/send_nsca.cfg'
      ignore_ports:  '^(?:Vlan|Po)\d+$'
      ignore_descr:  '(?:SPAN)'
-     service_name:  'Interfaces Status'
+     service_prefix:  'Interfaces'
 
 =over 4
 
@@ -144,11 +148,11 @@ skipped when submitting results. This defaults to anything containing the word
 "SPAN". Supply the content of a Perl regular expression, as in the example
 above.
 
-=item C<service_name>
+=item C<service_prefix>
 
-The Nagios Service Check name to use when submitting results. This must match
-the configured name on your Nagios server, and defaults to "Interfaces
-Status".
+Prefix of he Nagios Service Check name to use when submitting results. To this
+is added the name of the data check such as "Status" or "Errors".  This must
+match the configured name on your Nagios server, and defaults to "Interfaces".
 
 =back
 
