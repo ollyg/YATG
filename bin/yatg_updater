@@ -6,6 +6,7 @@ use warnings FATAL => 'all';
 use YATG::SharedStorage;
 YATG::SharedStorage->factory(qw(cache results));
 
+use YAML::XS;
 use YATG::Config;
 use YATG::Callback;
 
@@ -20,6 +21,8 @@ die "must not use SNMP::Effective 1.0\n"
     if $SNMP::Effective::VERSION == 1.0;
 use Net::Netmask;
 use Regexp::Common 'net';
+
+use Sys::Syslog 0.25;
 use Log::Dispatch::Syslog;
 
 use POSIX;
@@ -28,7 +31,7 @@ use File::Basename;
 use File::Spec::Functions;
 
 my $config = YATG::Config->parse(@ARGV) || die "failed to load config\n";
-Readonly my $INTERVAL => $config->yatg->{'interval'};
+Readonly my $INTERVAL => $ENV{YATG_INTERVAL} || $config->yatg->{'interval'};
 Readonly my $POLLERS  => $config->yatg->{'max_pollers'};
 Readonly my $TIMEOUT  => $config->yatg->{'timeout'};
 Readonly my $DEBUG    => $ENV{YATG_DEBUG} || $config->yatg->{'debug'};
@@ -90,6 +93,34 @@ my $dbh = DBI->connect(
 
 $cache->{devices} = $dbh->selectcol_arrayref(
     $config->yatg->{'dbi_ip_query'});
+
+# build resolver table for host names for device IPs
+if ($config->yatg->{'dbi_host_query'}) {
+    $cache->{host_for} = { map {$_->{ip} => $_->{name}} @{
+        $dbh->selectall_arrayref(
+          $config->yatg->{'dbi_host_query'},
+          { Slice => {} },
+        )}
+    };
+}
+
+# build filter list of interfaces for ifIndex items for each device
+if ($config->yatg->{'dbi_interfaces_query'}) {
+    foreach my $ip (@{$cache->{devices}}) {
+        $cache->{'interfaces_for'}->{$ip} = {
+            map { $_ => 1 } @{
+              $dbh->selectcol_arrayref(
+                $config->yatg->{'dbi_interfaces_query'},
+                {}, $ip)
+            }
+        };
+
+        # a device with no interfaces means allow all interfaces
+        delete $cache->{'interfaces_for'}->{$ip}
+          if 0 == scalar keys %{ $cache->{'interfaces_for'}->{$ip} };
+    }
+}
+
 $dbh->disconnect;
 
 # work out what OIDs to grab, and how
@@ -211,7 +242,7 @@ else {
     }
 }
 
-to_log("Cache rebuild took ". (time - $^T) ." seconds.\n");
+to_log(sprintf "Cache rebuild took %.3f seconds.\n", (time - $^T));
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -253,7 +284,7 @@ while (1) {
 
     my $exec = time;
     $se->execute;
-    to_log("Execute run took ". (time - $exec) ." seconds.\n");
+    to_log(sprintf "Execute run took %.3f seconds.\n", (time - $exec));
 
     my $update = time;
     my $stamp = floor($update - ($update % $INTERVAL));
@@ -265,7 +296,7 @@ while (1) {
             ({%$config}, $stamp, $results->{$mod});
     }
 
-    to_log("Remote update took ". (time - $update) ." seconds.\n");
+    to_log(sprintf "Remote update took %.3f seconds.\n", (time - $update));
 
     $results = YATG::SharedStorage->results({});
     last if $ENV{YATG_SINGLE_RUN};
@@ -371,6 +402,9 @@ To run the poller just once, set the C<YATG_SINGLE_RUN> environment variable
 to a true value. This is great for development. It makes C<yatg_updater> load
 its configuration, generate the device hints cache, sleep and then run just
 one poll cycle before exiting.
+
+To override the interval between polling runs, set the C<YATG_INTERVAL>
+environment variable to a number of seconds.
 
 For example:
 

@@ -11,6 +11,8 @@ __PACKAGE__->Validate({
         dbi_connect  => { type => ARRAYREF },
         dbi_ip_query => { type => SCALAR, default =>
 'SELECT ip FROM device WHERE extract(epoch from last_macsuck) > (extract(epoch from now()) - 7200)' },
+        dbi_host_query => { type => SCALAR, optional => 1 },
+        dbi_interfaces_query => { type => SCALAR, optional => 1 },
         interval     => { type => SCALAR, default => 300 },
         timeout      => { type => SCALAR, default => 280 },
         max_pollers  => { type => SCALAR, default => 20  },
@@ -47,6 +49,9 @@ __PACKAGE__->Validate({
         config_file    => { type => SCALAR, default => '/etc/send_nsca.cfg' },
         ignore_ports   => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
         ignore_descr   => { type => SCALAR, default => '(?:SPAN)' },
+        ignore_oper_descr    => { type => SCALAR, optional => 1 },
+        ignore_error_descr   => { type => SCALAR, optional => 1 },
+        ignore_discard_descr => { type => SCALAR, optional => 1 },
         service_prefix => { type => SCALAR, default => 'Interfaces' },
     },
 });
@@ -90,7 +95,7 @@ magic words will be ignored. Multiple storage methods can be given for any OID.
 
 =item C<stdout>
 
-This means to use the L<Data::Dumper> to print results.  It's good for
+This means to use the L<Data::Printer> to print results.  It's good for
 testing.
 
 See L<YATG::Store::STDOUT>.
@@ -199,23 +204,39 @@ The default value for this is C<[ public ]>.
 =head2 dbi_connect and the list of devices
 
 At start-up, C<yatg_updater> needs to be given a list of device IPs which it
-should poll with SNMP. We designed this system to work with NetDisco (a
-network management system) which populates a back-end database with device
-IPs. C<yatg_updater> will make a connection to a database and gather IPs.
+should poll with SNMP. C<yatg_updater> will make a connection to a database
+and gather IPs.
 
 By default the SQL query is set for use with NetDisco, so if you use that
 system you only need alter the DBI connection parameters (password, etc) in
 the C<dbi_connect> value in the example configuration file.
 
 If you want to use a different SQL query, add a new key and value to the
-configuration like so (this is an example, of course!):
+configuration:
 
  yatg:
-     dbi_ip_query: 'select ip from device;'
+     dbi_ip_query: 'SELECT ip FROM device;'
 
-The query must return a single list of IPs. If you don't have a back-end
-database with such information, then install SQLite and quickly set one up.
-It's good practice for asset management, if nothing else.
+The query must return a single list of IPs (suitable for L<DBI>'s
+C<selectcol_arrayref>). If you don't have a back-end database with such
+information, then install SQLite and quickly set one up (see L<YATG::Tutorial>
+for help).  It's good practice for asset management, if nothing else.
+
+If you use the NSCA Store backend then you can also submit results by host
+name instead of IP. To allow this, you need another configuration entry with
+another SQL query. This time there's no default. The query must return two
+columns, named I<ip> and I<name>. For example:
+
+ yatg:
+     dbi_host_query: 'SELECT ip, host AS name from hosts;'
+
+And finally another option, also for the NSCA Store backend, allows filtering
+of submitted results according to a list of Interface names on the device. The
+SQL in this case needs one "bind var" for the device IP, and must return a
+single list of names (again, used in C<DBI::selectcol_arrayref>):
+
+ yatg:
+     dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
 
 =head2 mibdirs
 

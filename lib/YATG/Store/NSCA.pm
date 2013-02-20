@@ -3,22 +3,45 @@ package YATG::Store::NSCA;
 use strict;
 use warnings FATAL => 'all';
 
+use YATG::SharedStorage;
+YATG::SharedStorage->factory(qw( ifOperStatus ifInErrors ifInDiscards ));
+
+# initialize cache of previous run's data
+YATG::SharedStorage->ifOperStatus({});
+YATG::SharedStorage->ifInErrors({});
+YATG::SharedStorage->ifInDiscards({});
+
+sub echo { print STDERR @_ if $ENV{YATG_DEBUG} }
+
 sub store {
     my ($config, $stamp, $results) = @_;
-    my $ignore_ports   = $config->{nsca}->{ignore_ports};
-    my $ignore_descr   = $config->{nsca}->{ignore_descr};
+
+    my $ignore_ports = $config->{nsca}->{ignore_ports};
+    my $ignore_descr = $config->{nsca}->{ignore_descr};
+
+    my $ignore_status_descr  = $config->{nsca}->{ignore_status_descr};
+    my $ignore_error_descr   = $config->{nsca}->{ignore_error_descr};
+    my $ignore_discard_descr = $config->{nsca}->{ignore_discard_descr};
+
     my $send_nsca_cmd  = $config->{nsca}->{send_nsca_cmd};
     my $send_nsca_cfg  = $config->{nsca}->{config_file};
     my $service_prefix = $config->{nsca}->{service_prefix};
+
+    my $ifOperStatusCache = YATG::SharedStorage->ifOperStatus();
+    my $ifInErrorsCache   = YATG::SharedStorage->ifInErrors();
+    my $ifInDiscardsCache = YATG::SharedStorage->ifInDiscards();
+
+    my $cache = YATG::SharedStorage->cache();
 
     my $nsca_server = $config->{nsca}->{nsca_server}
         or die "Must specify an nsca server in configuration.\n";
 
     # results look like this:
     #   $results->{device}->{leaf}->{port} = {value}
+    # build instead
+    #   $status->{device}->{port}->{leaf} = {value}
 
     my $status = {};
-    # build $status->{host}->{port}->{leaf => 'value'}
     foreach my $device (keys %$results) {
         foreach my $leaf (keys %{$results->{$device}}) {
             foreach my $port (keys %{$results->{$device}->{$leaf}}) {
@@ -41,32 +64,110 @@ sub store {
         or die "can't fork send_nsca: $!";
 
     # build and send report for each host
-    foreach my $host (keys %$status) {
-        my $combined_error=q{}; # combine the error messages to fit in nagios report
+    foreach my $device (keys %$status) {
+        my $status_report   = q{}; # combine the error messages to fit in nagios report
+        my $errors_report   = q{}; # combine the error messages to fit in nagios report
+        my $discards_report = q{}; # combine the error messages to fit in nagios report
 
-        foreach my $port (keys %{$status->{$host}}) {
+        my @ports_list = exists $cache->{'interfaces_for'}->{$device}
+          ? keys %{ $cache->{'interfaces_for'}->{$device} }
+          : keys %{ $status->{$device} };
+
+        foreach my $port (@ports_list) {
             next if $port =~ m/$ignore_ports/;
 
-            my $ifOperStatus = $status->{$host}->{$port}->{ifOperStatus};
-            my $ifInErrors   = $status->{$host}->{$port}->{ifInErrors};
-            my $ifInDiscards = $status->{$host}->{$port}->{ifInDiscards};
+            my $ifOperStatus = $status->{$device}->{$port}->{ifOperStatus};
+            my $ifInErrors   = $status->{$device}->{$port}->{ifInErrors};
+            my $ifInDiscards = $status->{$device}->{$port}->{ifInDiscards};
 
             next unless ($ifOperStatus or $ifInErrors or $ifInDiscards);
 
-            my $ifAlias = $status->{$host}->{$port}->{ifAlias} || '';
+            my $ifAlias = $status->{$device}->{$port}->{ifAlias} || '';
             next if length $ifAlias and $ifAlias =~ m/$ignore_descr/;
 
-            if ($ifOperStatus ne 'up') {
-                $combined_error .= " WARN: $port ($ifAlias) is $ifOperStatus;";
+            my $skip_oper = (length $ifAlias and $ignore_status_descr
+              and $ifAlias =~ m/$ignore_status_descr/) ? 1 : 0;
+            my $skip_err  = (length $ifAlias and $ignore_error_descr
+              and $ifAlias =~ m/$ignore_error_descr/) ? 1 : 0;
+            my $skip_disc = (length $ifAlias and $ignore_discard_descr
+              and $ifAlias =~ m/$ignore_discard_descr/) ? 1 : 0;
+
+            if ($ifOperStatus) {
+                if (not $skip_oper and $ifOperStatus ne 'up') {
+                    $status_report ||= 'NOT OK - DOWN: ';
+                    $status_report .= "$port($ifAlias) ";
+                }
+
+                # update cache
+                $ifOperStatusCache->{$device}->{$port} = $ifOperStatus;
+
+                if ($ifOperStatus ne 'up') {
+                    # can skip rest of this port's checks and reports
+                    $ifInErrorsCache->{$device}->{$port} = $ifInErrors
+                      if $ifInErrors;
+                    $ifInDiscardsCache->{$device}->{$port} = $ifInDiscards
+                      if $ifInDiscards;
+                    next;
+                }
+            }
+
+            if ($ifInErrors) {
+                # compare cache
+                if (not $skip_err
+                    and exists $ifInErrorsCache->{$device}->{$port}
+                    and $ifInErrors > $ifInErrorsCache->{$device}->{$port}) {
+                    $errors_report ||= 'NOT OK - Errors: ';
+                    $errors_report .= "$port($ifAlias) ";
+                }
+
+                # update cache
+                $ifInErrorsCache->{$device}->{$port} = $ifInErrors;
+            }
+
+            if ($ifInDiscards) {
+                # compare cache
+                if (not $skip_disc
+                    and exists $ifInDiscardsCache->{$device}->{$port}
+                    and $ifInDiscards > $ifInDiscardsCache->{$device}->{$port}) {
+                    $discards_report ||= 'NOT OK - Discards: ';
+                    $discards_report .= "$port($ifAlias) ";
+                }
+
+                # update cache
+                $ifInDiscardsCache->{$device}->{$port} = $ifInDiscards;
             }
         } # port
 
+        my $host = exists $cache->{host_for} ? $cache->{host_for}->{$device}
+                                             : $device;
+
         # $ECHO "$SERVER;$SERVICE;$RESULT;$OUTPUT" | $CMD -H $DEST_HOST -c $CFG -d ";"
-        if (length $combined_error) {
-            print $send_nsca "$host!$service_name!2!$combined_error\n";
+
+        if (exists $results->{$host}->{ifOperStatus} and length $status_report) {
+            echo "$host!$service_prefix Status!2!$status_report\n";
+            print $send_nsca "$host!$service_prefix Status!2!$status_report\n";
         }
         else {
-            print $send_nsca "$host!$service_name!0! OK: all activated interfaces are running\n";
+            echo "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
+            print $send_nsca "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
+        }
+
+        if (exists $results->{$host}->{ifInErrors} and length $errors_report) {
+            echo "$host!$service_prefix Errors!2!$errors_report\n";
+            print $send_nsca "$host!$service_prefix Errors!2!$errors_report\n";
+        }
+        else {
+            echo "$host!$service_prefix Errors!0!Status is OK\n";
+            print $send_nsca "$host!$service_prefix Errors!0!Status is OK\n";
+        }
+
+        if (exists $results->{$host}->{ifInDiscards} and length $discards_report) {
+            echo "$host!$service_prefix Discards!2!$discards_report\n";
+            print $send_nsca "$host!$service_prefix Discards!2!$discards_report\n";
+        }
+        else {
+            echo "$host!$service_prefix Discards!0!Status is OK\n";
+            print $send_nsca "$host!$service_prefix Discards!0!Status is OK\n";
         }
     } # host
 
@@ -160,6 +261,6 @@ match the configured name on your Nagios server, and defaults to "Interfaces".
 
 =over 4
 
-=item Opsview at L<http://www.opsview.org>
+=item Nagios NSCA at L<http://docs.icinga.org/latest/en/nsca.html>
 
 =back
