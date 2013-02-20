@@ -219,9 +219,8 @@ sub store {
 
 =head1 DESCRIPTION
 
-This module checks for device ports which are administratively enabled, but
-which are showing not connected to anything, at the time of polling. A Nagios
-CRITICAL result will be generated for such ports.
+This module checks interface status, errors and discard counts and sends
+a result to Nagios C<nsca> process for each.
 
 Only one check result per device is submitted (i.e. I<not> one result per
 port). If there are multiple ports in an alarm state on the same device, then
@@ -241,22 +240,57 @@ In your YATG configuration file, you must also include this store module on
 the OIDs required to generate a check result:
 
  oids:
-     "ifOperStatus":   [ifindex, nsca]
      "ifAlias":        [ifindex, nsca]
+     "ifOperStatus":   [ifindex, nsca]
+     "ifInErrors":     [ifindex, nsca]
+     "ifInDiscards":   [ifindex, nsca]
+
+Note that each of the C<ifOperStatus>, C<ifInErrors> and C<ifInDiscards> is
+optional, and that you should provide at least one. The C<ifAlias> is also
+optional but helps in the status report.
 
 =head2 Optional Configuration
 
 You can also supply the following settings in the main configuration file to
 override builtin defaults, like so:
 
+ yatg:
+     dbi_host_query: 'SELECT ip, host AS name from hosts'
+     dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
  nsca:
      send_nsca_cmd: '/usr/bin/send_nsca'
      config_file:   '/etc/send_nsca.cfg'
      ignore_ports:  '^(?:Vlan|Po)\d+$'
      ignore_descr:  '(?:SPAN)'
+     ignore_oper_descr:    '(?:TEST)'
+     ignore_error_descr:   '(?:NOERR)'
+     ignore_discard_descr: '(?:NODIS)'
      service_prefix:  'Interfaces'
 
 =over 4
+
+=item C<dbi_host_query>
+
+You can choose to submit results by host name instead of IP. To allow this,
+you need a configuration entry with an SQL query. The query must return two
+columns, named I<ip> and I<name>. For example:
+
+ yatg:
+     dbi_host_query: 'SELECT ip, host AS name from hosts;'
+
+=item C<dbi_interfaces_query>
+
+This option allows filtering of submitted results according to a list of
+Interface names on the device. The SQL in this case needs one "bind var" for
+the device IP, and must return a single list of names (again, used in
+C<DBI::selectcol_arrayref>):
+
+ yatg:
+     dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
+
+With this option you have an explicit list of interface names. You can also
+use the C<ignore_*> options (see below) to filter interfaces based on a
+regular expression.
 
 =item C<send_nsca_cmd>
 
@@ -281,6 +315,12 @@ Device port description fields matching this value cause the port to be
 skipped when submitting results. This defaults to anything containing the word
 "SPAN". Supply the content of a Perl regular expression, as in the example
 above.
+
+=item C<ignore_oper_descr>, C<ignore_error_descr>, C<ignore_discard_descr>
+
+This setting has the same effect as C<ignore_descr> but applies only to the
+port status, port error count, and port discard count checks, respectively.
+There is no default setting for these options.
 
 =item C<service_prefix>
 

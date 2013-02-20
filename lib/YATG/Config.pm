@@ -220,23 +220,7 @@ configuration:
 The query must return a single list of IPs (suitable for L<DBI>'s
 C<selectcol_arrayref>). If you don't have a back-end database with such
 information, then install SQLite and quickly set one up (see L<YATG::Tutorial>
-for help).  It's good practice for asset management, if nothing else.
-
-If you use the NSCA Store backend then you can also submit results by host
-name instead of IP. To allow this, you need another configuration entry with
-another SQL query. This time there's no default. The query must return two
-columns, named I<ip> and I<name>. For example:
-
- yatg:
-     dbi_host_query: 'SELECT ip, host AS name from hosts;'
-
-And finally another option, also for the NSCA Store backend, allows filtering
-of submitted results according to a list of Interface names on the device. The
-SQL in this case needs one "bind var" for the device IP, and must return a
-single list of names (again, used in C<DBI::selectcol_arrayref>):
-
- yatg:
-     dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
+for help). It's good practice for asset management, if nothing else.
 
 =head2 mibdirs
 
@@ -248,9 +232,7 @@ Otherwise, you must provide this application with all the MIBs required to
 translate leaf names to OIDs and get data types for polled values. This key
 takes a list of directories on your system which contain MIB files. They will
 all be loaded when C<yatg_updater> starts, so only specify what you need
-otherwise that will take a long time. Also make sure all references in the
-MIBs are resolvable to other MIBs. There is a bug in the current release of
-NetDisco MIBs as it is missing two MIB files.
+otherwise that will take a long time.
 
 Here is an example in YAML:
 
@@ -270,6 +252,7 @@ There are some additional, optional keys for the C<oids> section:
 
 C<yatg_updater> polls all devices at a given interval. Provide a number of
 settings to this key if you want to override the default of 300 (5 minutes).
+An alternative is the C<YATG_INTERVAL> environment setting.
 
 =item C<timeout>
 
@@ -289,7 +272,8 @@ computer.
 
 If this key has a true value, C<yatg_updater> will print out various messages
 on standard output, instead of using a log file. It's handy for testing, and
-defaults to false of course.
+defaults to false of course. An alternative is the C<YATG_DEBUG> environment
+setting.
 
 =back
 

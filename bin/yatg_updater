@@ -311,10 +311,10 @@ while (1) {
 
 =head1 DESCRIPTION
 
-YATG is an application which is intended to be run persistently. At intervals
-it will wake up and poll network devices for SNMP data, and then store or
-print that data. In this distribution are also included examples for
-presenting simple CGI web pages with graphs.
+YATG is a daemon (background process) which at intervals wakes up and polls
+network devices for SNMP data, and then stores or prints that data. In this
+distribution are also included examples for presenting simple CGI web pages
+with graphs.
 
 YATG is flexible, efficient and powerful. It can poll a large number of
 devices with thousands of ports in just a few seconds. The configuration is
@@ -358,7 +358,8 @@ smart wrapper for the L<SNMP::Effective> module.
 =item YATG::Store family of modules
 
 These are modules which take the SNMP poll results and store them to either
-local Disk, a Memcached server, or the disk on a remote networked server.
+local Disk, a Memcached server, the disk on a remote networked server, or
+Nagios via NSCA.
 
 =item YATG::Retrieve family of modules
 
@@ -392,6 +393,9 @@ L<YATG::Config>.
 
 Alongside that, there are examples of all the files you should need to
 install, in the C<examples/> folder of this distribution.
+
+Each of the Store and Retrieve modules might have additional Perl module
+dependencies (i.e. from CPAN) - see the relevant docs for more details.
 
 =head1 LOGGING and TESTING
 
