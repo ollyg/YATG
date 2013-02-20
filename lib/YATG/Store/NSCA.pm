@@ -69,9 +69,19 @@ sub store {
         my $errors_report   = q{}; # combine the error messages to fit in nagios report
         my $discards_report = q{}; # combine the error messages to fit in nagios report
 
+        my $tot_oper = 0;
+        my $tot_down = 0;
+        my $tot_err  = 0;
+        my $tot_with_err  = 0;
+        my $tot_dis  = 0;
+        my $tot_with_dis  = 0;
+
         my @ports_list = exists $cache->{'interfaces_for'}->{$device}
           ? keys %{ $cache->{'interfaces_for'}->{$device} }
           : keys %{ $status->{$device} };
+
+        #use Data::Printer;
+        #p $status->{$device};
 
         foreach my $port (@ports_list) {
             next if $port =~ m/$ignore_ports/;
@@ -79,8 +89,6 @@ sub store {
             my $ifOperStatus = $status->{$device}->{$port}->{ifOperStatus};
             my $ifInErrors   = $status->{$device}->{$port}->{ifInErrors};
             my $ifInDiscards = $status->{$device}->{$port}->{ifInDiscards};
-
-            next unless ($ifOperStatus or $ifInErrors or $ifInDiscards);
 
             my $ifAlias = $status->{$device}->{$port}->{ifAlias} || '';
             next if length $ifAlias and $ifAlias =~ m/$ignore_descr/;
@@ -92,51 +100,64 @@ sub store {
             my $skip_disc = (length $ifAlias and $ignore_discard_descr
               and $ifAlias =~ m/$ignore_discard_descr/) ? 1 : 0;
 
-            if ($ifOperStatus) {
+            if (exists $status->{$device}->{$port}->{ifOperStatus}) {
                 if (not $skip_oper and $ifOperStatus ne 'up') {
                     $status_report ||= 'NOT OK - DOWN: ';
                     $status_report .= "$port($ifAlias) ";
+                    ++$tot_down;
                 }
 
                 # update cache
                 $ifOperStatusCache->{$device}->{$port} = $ifOperStatus;
+                ++$tot_oper;
 
                 if ($ifOperStatus ne 'up') {
                     # can skip rest of this port's checks and reports
                     $ifInErrorsCache->{$device}->{$port} = $ifInErrors
-                      if $ifInErrors;
+                      if exists $status->{$device}->{$port}->{ifInErrors};
                     $ifInDiscardsCache->{$device}->{$port} = $ifInDiscards
-                      if $ifInDiscards;
+                      if exists $status->{$device}->{$port}->{ifInDiscards};
                     next;
                 }
             }
 
-            if ($ifInErrors) {
+            if (exists $status->{$device}->{$port}->{ifInErrors}) {
                 # compare cache
                 if (not $skip_err
                     and exists $ifInErrorsCache->{$device}->{$port}
                     and $ifInErrors > $ifInErrorsCache->{$device}->{$port}) {
                     $errors_report ||= 'NOT OK - Errors: ';
                     $errors_report .= "$port($ifAlias) ";
+                    ++$tot_with_err;
                 }
 
                 # update cache
                 $ifInErrorsCache->{$device}->{$port} = $ifInErrors;
+                ++$tot_err;
             }
 
-            if ($ifInDiscards) {
+            if (exists $status->{$device}->{$port}->{ifInDiscards}) {
                 # compare cache
                 if (not $skip_disc
                     and exists $ifInDiscardsCache->{$device}->{$port}
                     and $ifInDiscards > $ifInDiscardsCache->{$device}->{$port}) {
                     $discards_report ||= 'NOT OK - Discards: ';
                     $discards_report .= "$port($ifAlias) ";
+                    ++$tot_with_dis;
                 }
 
                 # update cache
                 $ifInDiscardsCache->{$device}->{$port} = $ifInDiscards;
+                ++$tot_dis;
             }
         } # port
+
+        $status_report   = "NOT OK - $tot_down (of $tot_oper polled) interfaces are DOWN."
+          if $tot_down > 10;
+        $errors_report   = "NOT OK - $tot_with_err (of $tot_err UP) interfaces have errors."
+          if $tot_with_err > 10;
+        $discards_report = "NOT OK - $tot_with_dis (of $tot_dis UP) interfaces have discards."
+          if $tot_with_dis > 10;
 
         my $host = exists $cache->{host_for} ? $cache->{host_for}->{$device}
                                              : $device;
@@ -150,7 +171,7 @@ sub store {
                 print $send_nsca $output;
             }
             else {
-                my $output = "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
+                my $output = "$host!$service_prefix Status!0!OK: $tot_oper interfaces are UP and running.\n";
                 echo $output;
                 print $send_nsca $output;
             }
@@ -163,7 +184,7 @@ sub store {
                 print $send_nsca $output;
             }
             else {
-                my $output = "$host!$service_prefix Errors!0!OK: No errors.\n";
+                my $output = "$host!$service_prefix Errors!0!OK: No errors on $tot_err UP interfaces.\n";
                 echo $output;
                 print $send_nsca $output;
             }
@@ -176,7 +197,7 @@ sub store {
                 print $send_nsca $output;
             }
             else {
-                my $output = "$host!$service_prefix Discards!0!OK: No discards.\n";
+                my $output = "$host!$service_prefix Discards!0!OK: No discards on $tot_dis UP interfaces.\n";
                 echo $output;
                 print $send_nsca $output;
             }
