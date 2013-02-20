@@ -24,6 +24,7 @@ use Regexp::Common 'net';
 
 use Sys::Syslog 0.25;
 use Log::Dispatch::Syslog;
+use Data::Printer;
 
 use POSIX;
 use FindBin;
@@ -35,6 +36,9 @@ Readonly my $INTERVAL => $ENV{YATG_INTERVAL} || $config->yatg->{'interval'};
 Readonly my $POLLERS  => $config->yatg->{'max_pollers'};
 Readonly my $TIMEOUT  => $config->yatg->{'timeout'};
 Readonly my $DEBUG    => $ENV{YATG_DEBUG} || $config->yatg->{'debug'};
+$ENV{YATG_DEBUG} = $DEBUG; # copy from config for use in backends
+
+# p $config if $ENV{YATG_DEBUG};
 
 my $logger = Log::Dispatch::Syslog->new($config->log_dispatch_syslog);
 sub to_log {
@@ -64,11 +68,6 @@ my $cache   = YATG::SharedStorage->cache({
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# make the daemon cross-platform, so exec always calls the script
-# itself with the right path, no matter how the script was invoked.
-Readonly my $script => File::Basename::basename($0);
-Readonly my $SELF => catfile $FindBin::Bin, $script;
-
 # POSIX unmasks the sigprocmask properly
 my $sigset = POSIX::SigSet->new;
 my $action = POSIX::SigAction->new(
@@ -76,10 +75,11 @@ my $action = POSIX::SigAction->new(
 );
 POSIX::sigaction(&POSIX::SIGHUP, $action);
 
+chomp(my $command = (qx/ps -o args $$/)[1]);
 sub hup_handler {
     to_log("SIGHUP received, restarting...\n");
-    exec ($SELF, @ARGV) or die "Couldn't restart $0: $!\n";
-} # thanks go to perlipc man page for this
+    exec ($command) or die "Couldn't restart $0: $!\n";
+}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # rebuild device cache (also on sigHUP)
@@ -96,13 +96,15 @@ $cache->{devices} = $dbh->selectcol_arrayref(
 
 # build resolver table for host names for device IPs
 if ($config->yatg->{'dbi_host_query'}) {
-    $cache->{host_for} = { map {$_->{ip} => $_->{name}} @{
+    $cache->{'host_for'} = { map {$_->{ip} => $_->{name}} @{
         $dbh->selectall_arrayref(
           $config->yatg->{'dbi_host_query'},
           { Slice => {} },
         )}
     };
 }
+
+# p $cache->{host_for} if exists $cache->{host_for};
 
 # build filter list of interfaces for ifIndex items for each device
 if ($config->yatg->{'dbi_interfaces_query'}) {
@@ -120,6 +122,8 @@ if ($config->yatg->{'dbi_interfaces_query'}) {
           if 0 == scalar keys %{ $cache->{'interfaces_for'}->{$ip} };
     }
 }
+
+# p $cache->{'interfaces_for'} if exists $cache->{'interfaces_for'};
 
 $dbh->disconnect;
 

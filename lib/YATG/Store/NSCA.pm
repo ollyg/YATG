@@ -11,7 +11,7 @@ YATG::SharedStorage->ifOperStatus({});
 YATG::SharedStorage->ifInErrors({});
 YATG::SharedStorage->ifInDiscards({});
 
-sub echo { print STDERR @_ if $ENV{YATG_DEBUG} }
+sub echo { main::to_log(shift) if $ENV{YATG_DEBUG} }
 
 sub store {
     my ($config, $stamp, $results) = @_;
@@ -143,31 +143,43 @@ sub store {
 
         # $ECHO "$SERVER;$SERVICE;$RESULT;$OUTPUT" | $CMD -H $DEST_HOST -c $CFG -d ";"
 
-        if (exists $results->{$host}->{ifOperStatus} and length $status_report) {
-            echo "$host!$service_prefix Status!2!$status_report\n";
-            print $send_nsca "$host!$service_prefix Status!2!$status_report\n";
-        }
-        else {
-            echo "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
-            print $send_nsca "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
-        }
-
-        if (exists $results->{$host}->{ifInErrors} and length $errors_report) {
-            echo "$host!$service_prefix Errors!2!$errors_report\n";
-            print $send_nsca "$host!$service_prefix Errors!2!$errors_report\n";
-        }
-        else {
-            echo "$host!$service_prefix Errors!0!Status is OK\n";
-            print $send_nsca "$host!$service_prefix Errors!0!Status is OK\n";
+        if (exists $results->{$device}->{ifOperStatus}) {
+            if (length $status_report) {
+                my $output = "$host!$service_prefix Status!2!$status_report\n";
+                echo $output;
+                print $send_nsca $output;
+            }
+            else {
+                my $output = "$host!$service_prefix Status!0!OK: all activated interfaces are running\n";
+                echo $output;
+                print $send_nsca $output;
+            }
         }
 
-        if (exists $results->{$host}->{ifInDiscards} and length $discards_report) {
-            echo "$host!$service_prefix Discards!2!$discards_report\n";
-            print $send_nsca "$host!$service_prefix Discards!2!$discards_report\n";
+        if (exists $results->{$device}->{ifInErrors}) {
+            if (length $errors_report) {
+                my $output = "$host!$service_prefix Errors!2!$errors_report\n";
+                echo $output;
+                print $send_nsca $output;
+            }
+            else {
+                my $output = "$host!$service_prefix Errors!0!OK: No errors.\n";
+                echo $output;
+                print $send_nsca $output;
+            }
         }
-        else {
-            echo "$host!$service_prefix Discards!0!Status is OK\n";
-            print $send_nsca "$host!$service_prefix Discards!0!Status is OK\n";
+
+        if (exists $results->{$device}->{ifInDiscards}) {
+            if (length $discards_report) {
+                my $output = "$host!$service_prefix Discards!2!$discards_report\n";
+                echo $output;
+                print $send_nsca $output;
+            }
+            else {
+                my $output = "$host!$service_prefix Discards!0!OK: No discards.\n";
+                echo $output;
+                print $send_nsca $output;
+            }
         }
     } # host
 
