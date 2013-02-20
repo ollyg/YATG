@@ -212,7 +212,7 @@ sub get_community {
         my $sess = SNMP::Session->new(
             DestHost  => $ip,
             Version   => 1,
-            Timeout   => 10000,
+            Timeout   => 500000,
             Community => $c,
         );
         my $val = $sess->get('sysUpTime.0');
@@ -222,8 +222,12 @@ sub get_community {
 
         # success, use this community and go to next device
         $cache->{community_for}->{$ip} = $c;
+        # to_log("commnity for $ip discovered as $c\n") if $DEBUG;
         last;
     }
+
+    to_log("warning: Failed to find community for [$ip] !\n")
+      if !exists $cache->{community_for}->{$ip};
 }
 
 # load storage module(s)
@@ -242,6 +246,7 @@ if (scalar @{$config->yatg->{'communities'}} == 1) {
 }
 else {
     foreach my $ip (@{$cache->{devices}}) {
+        # to_log("finding community string for $ip...\n") if $DEBUG;
         &get_community($ip);
     }
 }
@@ -276,12 +281,12 @@ while (1) {
         }
 
         $se->add(
-            DestHost => $ip,
-            Arg      => {
+            desthost => $ip,
+            args      => {
                 Community => $cache->{community_for}->{$ip},
                 Timeout   => 5000000,
             },
-            Callback => \&YATG::Callback::snmp_callback,
+            callback => \&YATG::Callback::snmp_callback,
             walk     => [ keys %{$cache->{get_for}->{$ip}} ],
         );
     }   
