@@ -31,8 +31,10 @@ sub store {
     my $ifInErrorsCache   = YATG::SharedStorage->ifInErrors();
     my $ifInDiscardsCache = YATG::SharedStorage->ifInDiscards();
 
-    my $cache = YATG::SharedStorage->cache();
+    # TODO: should be configurable
+    my $threshold = int($config->{yatg}->{interval} / 60);
 
+    my $cache = YATG::SharedStorage->cache();
     my $nsca_server = $config->{nsca}->{nsca_server}
         or die "Must specify an nsca server in configuration.\n";
 
@@ -124,11 +126,14 @@ sub store {
             if (exists $status->{$device}->{$port}->{ifInErrors}) {
                 # compare cache
                 if (not $skip_err
-                    and exists $ifInErrorsCache->{$device}->{$port}
-                    and $ifInErrors > $ifInErrorsCache->{$device}->{$port}) {
-                    $errors_report ||= 'NOT OK - Errors: ';
-                    $errors_report .= "$port($ifAlias) ";
-                    ++$tot_with_err;
+                    and exists $ifInErrorsCache->{$device}->{$port}) {
+
+                    my $diff = ($ifInErrors - $ifInErrorsCache->{$device}->{$port});
+                    if ($diff > $threshold) {
+                        $errors_report ||= 'NOT OK - Errors: ';
+                        $errors_report .= "$port(+$diff)($ifAlias) ";
+                        ++$tot_with_err;
+                    }
                 }
 
                 # update cache
@@ -139,11 +144,14 @@ sub store {
             if (exists $status->{$device}->{$port}->{ifInDiscards}) {
                 # compare cache
                 if (not $skip_disc
-                    and exists $ifInDiscardsCache->{$device}->{$port}
-                    and $ifInDiscards > $ifInDiscardsCache->{$device}->{$port}) {
-                    $discards_report ||= 'NOT OK - Discards: ';
-                    $discards_report .= "$port($ifAlias) ";
-                    ++$tot_with_dis;
+                    and exists $ifInDiscardsCache->{$device}->{$port}) {
+
+                    my $diff = ($ifInDiscards - $ifInDiscardsCache->{$device}->{$port});
+                    if ($diff > $threshold) {
+                        $discards_report ||= 'NOT OK - Discards: ';
+                        $discards_report .= "$port(+$diff)($ifAlias) ";
+                        ++$tot_with_dis;
+                    }
                 }
 
                 # update cache
