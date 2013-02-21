@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+5.130520  2013-02-21 10:45:40 Europe/London
+
   [ENHANCEMENTS]
 
   * Add threshold check to Errors and Discards NSCA reporter - min 1/minute
