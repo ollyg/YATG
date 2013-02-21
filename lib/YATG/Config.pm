@@ -244,7 +244,7 @@ Here is an example in YAML:
 
 =head1 OPTIONAL CONFIGURATION
 
-There are some additional, optional keys for the C<oids> section:
+There are some additional, optional keys for the C<yatg> section:
 
 =over 4
 
