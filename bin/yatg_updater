@@ -10,6 +10,7 @@ use YAML::XS;
 use YATG::Config;
 use YATG::Callback;
 
+use File::stat;
 use Symbol;
 use Readonly;
 use Time::HiRes qw(time sleep);
@@ -85,47 +86,51 @@ sub hup_handler {
 # rebuild device cache (also on sigHUP)
 to_log("YATG Loaded.\n") if $DEBUG;
 
-# list of all device ips
-my $dbh = DBI->connect(
-    @{$config->yatg->{'dbi_connect'}},
-    {PrintError => 1, RaiseError => 1, AutoCommit => 1}
-) or die $DBI::errstr;
+sub get_hosts {
+    # list of all device ips
+    my $dbh = DBI->connect(
+        @{$config->yatg->{'dbi_connect'}},
+        {PrintError => 1, RaiseError => 1, AutoCommit => 1}
+    ) or die $DBI::errstr;
 
-$cache->{devices} = $dbh->selectcol_arrayref(
-    $config->yatg->{'dbi_ip_query'});
+    $cache->{devices} = $dbh->selectcol_arrayref(
+        $config->yatg->{'dbi_ip_query'});
 
-# build resolver table for host names for device IPs
-if ($config->yatg->{'dbi_host_query'}) {
-    $cache->{'host_for'} = { map {$_->{ip} => $_->{name}} @{
-        $dbh->selectall_arrayref(
-          $config->yatg->{'dbi_host_query'},
-          { Slice => {} },
-        )}
-    };
-}
-
-# p $cache->{host_for} if exists $cache->{host_for};
-
-# build filter list of interfaces for ifIndex items for each device
-if ($config->yatg->{'dbi_interfaces_query'}) {
-    foreach my $ip (@{$cache->{devices}}) {
-        $cache->{'interfaces_for'}->{$ip} = {
-            map { $_ => 1 } @{
-              $dbh->selectcol_arrayref(
-                $config->yatg->{'dbi_interfaces_query'},
-                {}, $ip)
-            }
+    # build resolver table for host names for device IPs
+    if ($config->yatg->{'dbi_host_query'}) {
+        $cache->{'host_for'} = { map {$_->{ip} => $_->{name}} @{
+            $dbh->selectall_arrayref(
+              $config->yatg->{'dbi_host_query'},
+              { Slice => {} },
+            )}
         };
-
-        # a device with no interfaces means allow all interfaces
-        delete $cache->{'interfaces_for'}->{$ip}
-          if 0 == scalar keys %{ $cache->{'interfaces_for'}->{$ip} };
     }
+
+    # p $cache->{host_for} if exists $cache->{host_for};
+
+    # build filter list of interfaces for ifIndex items for each device
+    if ($config->yatg->{'dbi_interfaces_query'}) {
+        foreach my $ip (@{$cache->{devices}}) {
+            $cache->{'interfaces_for'}->{$ip} = {
+                map { $_ => 1 } @{
+                  $dbh->selectcol_arrayref(
+                    $config->yatg->{'dbi_interfaces_query'},
+                    {}, $ip)
+                }
+            };
+
+            # a device with no interfaces means allow all interfaces
+            delete $cache->{'interfaces_for'}->{$ip}
+              if 0 == scalar keys %{ $cache->{'interfaces_for'}->{$ip} };
+        }
+    }
+
+    # p $cache->{'interfaces_for'} if exists $cache->{'interfaces_for'};
+    $dbh->disconnect;
 }
 
-# p $cache->{'interfaces_for'} if exists $cache->{'interfaces_for'};
-
-$dbh->disconnect;
+# initialise hosts list
+&get_hosts;
 
 # work out what OIDs to grab, and how
 SNMP::addMibDirs(@{$config->yatg->{'mibdirs'}});
@@ -153,6 +158,8 @@ foreach my $leaf (keys %{$config->yatg->{'oids'}}) {
 }
 
 sub prime_cache {
+    to_log("Generating oid/host map... \n") if $DEBUG;
+
     foreach my $leaf (keys %{$config->yatg->{'oids'}}) {
         my %tokens = map {lc($_) => 1} @{$config->yatg->{'oids'}->{$leaf}};
 
@@ -198,6 +205,20 @@ sub prime_cache {
     }
 }
 
+sub check_newhosts_watch {
+    return unless exists $config->{'yatg'}->{'newhosts_watch'};
+
+    my $file = $config->{'yatg'}->{'newhosts_watch'};
+    return unless length $file and -e $file;
+
+    my $mtime = stat($file)->mtime;
+    return if $mtime < (time - $INTERVAL);
+
+    to_log("newhosts_watch updated - getting new hosts...\n") if $DEBUG;
+    &get_hosts;
+    &prime_cache;
+}
+
 sub get_community {
     my $ip = shift;
 
@@ -237,6 +258,8 @@ foreach my $module (@to_load) {
         or die "Failed to load $module store module: $@\n";
 }
 
+to_log("Getting communities... \n") if $DEBUG;
+
 # connect to each device and find out its community,
 # shortcut if there is only one community supplied
 if (scalar @{$config->yatg->{'communities'}} == 1) {
@@ -251,7 +274,8 @@ else {
     }
 }
 
-to_log(sprintf "Cache rebuild took %.3f seconds.\n", (time - $^T));
+&prime_cache;
+to_log(sprintf "Initial cache build took %.3f seconds.\n", (time - $^T));
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -260,10 +284,8 @@ while (1) {
     to_log("Sleeping for $naptime seconds...\n") if $DEBUG;
     sleep $naptime;
 
-    # refresh known devices
-    to_log("Priming cache... ") if $DEBUG;
-    &prime_cache;
-    to_log("done!\n") if $DEBUG;
+    # see if we need to refresh the cache
+    &check_newhosts_watch;
 
     my $se = SNMP::Effective->new(
         MaxSessions   => $POLLERS,

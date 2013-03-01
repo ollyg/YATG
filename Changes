@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+  [NEW FEATURES]
+
+  * newhosts_watch option, which triggers host-list update if modified
+
 5.130520  2013-02-21 10:45:40 Europe/London
 
   [ENHANCEMENTS]
@@ -19,7 +23,7 @@
 
 5.130510_001 2013-02-20 13:04:42 Europe/London
 
-  [ NEW FEATURES]
+  [NEW FEATURES]
 
   * New environment variable YATG_INTERVAL to override interval config val
   * NSCA plugin now has per-leaf reports for ifOperStatus, ifInErrors, ifInDiscards
