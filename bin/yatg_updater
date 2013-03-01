@@ -214,7 +214,7 @@ sub check_newhosts_watch {
     my $mtime = stat($file)->mtime;
     return if $mtime < (time - $INTERVAL);
 
-    to_log("newhosts_watch updated - getting new hosts...\n") if $DEBUG;
+    to_log("newhosts_watch updated - getting new hosts...\n");
     &get_hosts;
     &prime_cache;
 }
