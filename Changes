@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+5.130600  2013-03-01 16:45:46 Europe/London
+
   [NEW FEATURES]
 
   * newhosts_watch option, which triggers host-list update if modified
