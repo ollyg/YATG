@@ -1,6 +1,6 @@
 package YATG::Retrieve::Disk;
 {
-  $YATG::Retrieve::Disk::VERSION = '4.112532';
+  $YATG::Retrieve::Disk::VERSION = '5.130840';
 }
 
 use strict;
@@ -81,7 +81,7 @@ YATG::Retrieve::Disk - Retrieve a set of data stored by YATG::Store::Disk
 
 =head1 VERSION
 
-version 4.112532
+version 5.130840
 
 =head1 DESCRIPTION
 
@@ -90,6 +90,30 @@ stored by YATG::Store::Disk. An implementation of this process is given in the
 CGI bundled with this distribution, which displays results of SNMP polls.
 
 For more information on the data storage format, see L<YATG::Store::Disk>.
+
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
 
 =head1 USAGE
 
@@ -165,7 +189,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by University of Oxford.
+This software is copyright (c) 2013 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

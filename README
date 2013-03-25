@@ -2,13 +2,13 @@ NAME
     YATG - Fast SNMP data poller daemon, with storage and graphing
 
 VERSION
-    version 4.112532
+    version 5.130840
 
 DESCRIPTION
-    YATG is an application which is intended to be run persistently. At
-    intervals it will wake up and poll network devices for SNMP data, and
-    then store or print that data. In this distribution are also included
-    examples for presenting simple CGI web pages with graphs.
+    YATG is a daemon (background process) which at intervals wakes up and
+    polls network devices for SNMP data, and then stores or prints that
+    data. In this distribution are also included examples for presenting
+    simple CGI web pages with graphs.
 
     YATG is flexible, efficient and powerful. It can poll a large number of
     devices with thousands of ports in just a few seconds. The configuration
@@ -48,8 +48,8 @@ What's in this distribution
 
     YATG::Store family of modules
         These are modules which take the SNMP poll results and store them to
-        either local Disk, a Memcached server, or the disk on a remote
-        networked server.
+        either local Disk, a Memcached server, the disk on a remote
+        networked server, or Nagios via NSCA.
 
     YATG::Retrieve family of modules
         These are modules which read stored results back to you, for a given
@@ -79,6 +79,9 @@ Where to go from here
     Alongside that, there are examples of all the files you should need to
     install, in the "examples/" folder of this distribution.
 
+    Each of the Store and Retrieve modules might have additional Perl module
+    dependencies (i.e. from CPAN) - see the relevant docs for more details.
+
 LOGGING and TESTING
     This module uses "Log::Dispatch::Syslog" for logging, and by default
     will log timing data to your system's syslog service. More information
@@ -91,6 +94,9 @@ LOGGING and TESTING
     variable to a true value. This is great for development. It makes
     "yatg_updater" load its configuration, generate the device hints cache,
     sleep and then run just one poll cycle before exiting.
+
+    To override the interval between polling runs, set the "YATG_INTERVAL"
+    environment variable to a number of seconds.
 
     For example:
 
@@ -107,7 +113,7 @@ AUTHOR
     Oliver Gorwits <oliver@cpan.org>
 
 COPYRIGHT AND LICENSE
-    This software is copyright (c) 2011 by University of Oxford.
+    This software is copyright (c) 2013 by University of Oxford.
 
     This is free software; you can redistribute it and/or modify it under
     the same terms as the Perl 5 programming language system itself.

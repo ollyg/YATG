@@ -21,36 +21,27 @@
       },
       "runtime" : {
          "requires" : {
-            "Cache::Memcached" : 0,
             "Class::Data::Inheritable" : 0,
-            "Config" : 0,
             "DBI" : 0,
-            "Data::Dumper" : 0,
+            "Data::Printer" : 0,
             "Exporter" : 0,
-            "ExtUtils::MakeMaker" : 0,
-            "Fcntl" : 0,
             "File::Basename" : 0,
-            "File::Spec" : 0,
             "File::Spec::Functions" : 0,
+            "File::stat" : 0,
             "FindBin" : 0,
             "Log::Dispatch::Syslog" : 0,
             "Module::MultiConf" : "0.0301",
-            "Net::DNS" : 0,
             "Net::Netmask" : 0,
             "POSIX" : 0,
-            "RPC::Serialized::Client::INET" : 0,
-            "RPC::Serialized::Handler" : 0,
             "Readonly" : 0,
             "Regexp::Common" : 0,
             "SNMP" : 0,
             "SNMP::Effective" : 0,
             "Symbol" : 0,
-            "Tie::File::FixedRecLen" : 0,
-            "Tie::File::FixedRecLen::Store" : 0,
+            "Sys::Syslog" : "0.25",
             "Time::HiRes" : 0,
-            "Time::Local" : 0,
+            "YAML::XS" : 0,
             "base" : 0,
-            "integer" : 0,
             "strict" : 0,
             "vars" : 0,
             "warnings" : 0
@@ -74,6 +65,6 @@
          "web" : "https://github.com/ollyg/YATG"
       }
    },
-   "version" : "4.112532"
+   "version" : "5.130840"
 }
 

@@ -1,6 +1,6 @@
 package YATG::Config;
 {
-  $YATG::Config::VERSION = '4.112532';
+  $YATG::Config::VERSION = '5.130840';
 }
 
 use strict;
@@ -14,6 +14,8 @@ __PACKAGE__->Validate({
         dbi_connect  => { type => ARRAYREF },
         dbi_ip_query => { type => SCALAR, default =>
 'SELECT ip FROM device WHERE extract(epoch from last_macsuck) > (extract(epoch from now()) - 7200)' },
+        dbi_host_query => { type => SCALAR, optional => 1 },
+        dbi_interfaces_query => { type => SCALAR, optional => 1 },
         interval     => { type => SCALAR, default => 300 },
         timeout      => { type => SCALAR, default => 280 },
         max_pollers  => { type => SCALAR, default => 20  },
@@ -26,6 +28,7 @@ __PACKAGE__->Validate({
             /usr/share/netdisco/mibs/net-snmp
         )] },
         disk_root    => { type => SCALAR, default => '/var/lib/yatg' },
+        newhosts_watch => { type => SCALAR, optional => 1 },
     },
     cache_memcached => {
         servers   => { type => ARRAYREF, optional => 1 },
@@ -45,12 +48,16 @@ __PACKAGE__->Validate({
                             default => sub { return "$_[1]\n" } },
     },
     nsca => {
-        nsca_server   => { type => SCALAR, optional => 1 },
-        send_nsca_cmd => { type => SCALAR, default => '/usr/bin/send_nsca' },
-        config_file   => { type => SCALAR, default => '/etc/send_nsca.cfg' },
-        ignore_ports  => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
-        ignore_descr  => { type => SCALAR, default => '(?:SPAN)' },
-        service_name  => { type => SCALAR, default => 'Interfaces Status' },
+        nsca_server    => { type => SCALAR, optional => 1 },
+        nsca_port      => { type => SCALAR, default => '5667' },
+        send_nsca_cmd  => { type => SCALAR, default => '/usr/bin/send_nsca' },
+        config_file    => { type => SCALAR, default => '/etc/send_nsca.cfg' },
+        ignore_ports   => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
+        ignore_descr   => { type => SCALAR, default => '(?:SPAN)' },
+        ignore_oper_descr    => { type => SCALAR, optional => 1 },
+        ignore_error_descr   => { type => SCALAR, optional => 1 },
+        ignore_discard_descr => { type => SCALAR, optional => 1 },
+        service_prefix => { type => SCALAR, default => 'Interfaces' },
     },
 });
 
@@ -68,7 +75,7 @@ YATG::Config - Configuration management for YATG
 
 =head1 VERSION
 
-version 4.112532
+version 5.130840
 
 =head1 REQUIRED CONFIGURATION
 
@@ -105,7 +112,7 @@ magic words will be ignored. Multiple storage methods can be given for any OID.
 
 =item C<stdout>
 
-This means to use the L<Data::Dumper> to print results.  It's good for
+This means to use the L<Data::Printer> to print results.  It's good for
 testing.
 
 See L<YATG::Store::STDOUT>.
@@ -214,23 +221,23 @@ The default value for this is C<[ public ]>.
 =head2 dbi_connect and the list of devices
 
 At start-up, C<yatg_updater> needs to be given a list of device IPs which it
-should poll with SNMP. We designed this system to work with NetDisco (a
-network management system) which populates a back-end database with device
-IPs. C<yatg_updater> will make a connection to a database and gather IPs.
+should poll with SNMP. C<yatg_updater> will make a connection to a database
+and gather IPs.
 
 By default the SQL query is set for use with NetDisco, so if you use that
 system you only need alter the DBI connection parameters (password, etc) in
 the C<dbi_connect> value in the example configuration file.
 
 If you want to use a different SQL query, add a new key and value to the
-configuration like so (this is an example, of course!):
+configuration:
 
  yatg:
-     dbi_ip_query: 'select ip from device;'
+     dbi_ip_query: 'SELECT ip FROM device;'
 
-The query must return a single list of IPs. If you don't have a back-end
-database with such information, then install SQLite and quickly set one up.
-It's good practice for asset management, if nothing else.
+The query must return a single list of IPs (suitable for L<DBI>'s
+C<selectcol_arrayref>). If you don't have a back-end database with such
+information, then install SQLite and quickly set one up (see L<YATG::Tutorial>
+for help). It's good practice for asset management, if nothing else.
 
 =head2 mibdirs
 
@@ -242,9 +249,7 @@ Otherwise, you must provide this application with all the MIBs required to
 translate leaf names to OIDs and get data types for polled values. This key
 takes a list of directories on your system which contain MIB files. They will
 all be loaded when C<yatg_updater> starts, so only specify what you need
-otherwise that will take a long time. Also make sure all references in the
-MIBs are resolvable to other MIBs. There is a bug in the current release of
-NetDisco MIBs as it is missing two MIB files.
+otherwise that will take a long time.
 
 Here is an example in YAML:
 
@@ -256,7 +261,7 @@ Here is an example in YAML:
 
 =head1 OPTIONAL CONFIGURATION
 
-There are some additional, optional keys for the C<oids> section:
+There are some additional, optional keys for the C<yatg> section:
 
 =over 4
 
@@ -264,6 +269,7 @@ There are some additional, optional keys for the C<oids> section:
 
 C<yatg_updater> polls all devices at a given interval. Provide a number of
 settings to this key if you want to override the default of 300 (5 minutes).
+An alternative is the C<YATG_INTERVAL> environment setting.
 
 =item C<timeout>
 
@@ -279,11 +285,25 @@ asynchronously and you can set the maximum number of polls which are happening
 at once using this key. The default is 20 which is reasonably for any modern
 computer.
 
+=item C<newhosts_watch>
+
+As YATG is a long-running process, you might occasionally want to update its
+list of hosts to monitor. Of course you can send a C<SIGHUP> and have YATG
+reload entirely, but this can be slow because of the re-checking of SNMP
+communities, and also requires an external process to send the signal.
+
+If the YATG config has not changed, but you wish to update the list of
+monitored hosts, then set C<newhosts_watch> to the name of a file. The
+modification time of the file is watched and if it updates then YATG retrieves
+a new set of hosts (and host names and interface filters, if configured), on
+the next polling run.
+
 =item C<debug>
 
 If this key has a true value, C<yatg_updater> will print out various messages
 on standard output, instead of using a log file. It's handy for testing, and
-defaults to false of course.
+defaults to false of course. An alternative is the C<YATG_DEBUG> environment
+setting.
 
 =back
 
@@ -336,7 +356,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by University of Oxford.
+This software is copyright (c) 2013 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

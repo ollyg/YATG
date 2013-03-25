@@ -1,6 +1,6 @@
 package RPC::Serialized::Handler::YATG::Store;
 {
-  $RPC::Serialized::Handler::YATG::Store::VERSION = '4.112532';
+  $RPC::Serialized::Handler::YATG::Store::VERSION = '5.130840';
 }
 
 use strict;
@@ -28,13 +28,41 @@ RPC::Serialized::Handler::YATG::Store - RPC handler for YATG::Store::Disk
 
 =head1 VERSION
 
-version 4.112532
+version 5.130840
 
 =head1 DESCRIPTION
 
 This module implements an L<RPC::Serialized> handler for L<YATG::Store::Disk>.
 There is no special configuration, and all received parameters are passed on
 to C<YATG::Store::Disk::store()> verbatim.
+
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<RPC::Serialized>
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
 
 =head1 INSTALLATION
 
@@ -72,7 +100,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by University of Oxford.
+This software is copyright (c) 2013 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -1,6 +1,6 @@
 package YATG::Store::Disk;
 {
-  $YATG::Store::Disk::VERSION = '4.112532';
+  $YATG::Store::Disk::VERSION = '5.130840';
 }
 
 use strict;
@@ -84,7 +84,7 @@ YATG::Store::Disk - Back-end module to store polled data to disk
 
 =head1 VERSION
 
-version 4.112532
+version 5.130840
 
 =head1 DESCRIPTION
 
@@ -124,6 +124,30 @@ future from that. The file is padded out when there are missing data values.
 Most of this you don't really need to worry about, because you get data back
 using the L<YATG::Retrieve::Disk> module.
 
+=head1 REQUIREMENTS
+
+Install the following additional modules to use this plugin:
+
+=over 4
+
+=item *
+
+L<Tile::File::FixedRecLen>
+
+=item *
+
+L<integer>
+
+=item *
+
+L<Time::Local>
+
+=item *
+
+L<Fcntl>
+
+=back
+
 =head1 CONFIGURATION
 
 The only configuration you need to provide is for the file path of the
@@ -150,7 +174,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by University of Oxford.
+This software is copyright (c) 2013 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
