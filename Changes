@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+  [NEW FEATURES]
+
+  * Can specify nsca_port to NSCA Store backend, in addition to the host
+
 5.130600  2013-03-01 16:45:46 Europe/London
 
   [NEW FEATURES]

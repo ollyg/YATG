@@ -37,6 +37,7 @@ sub store {
     my $cache = YATG::SharedStorage->cache();
     my $nsca_server = $config->{nsca}->{nsca_server}
         or die "Must specify an nsca server in configuration.\n";
+    my $nsca_port = $config->{nsca}->{nsca_port};
 
     # results look like this:
     #   $results->{device}->{leaf}->{port} = {value}
@@ -62,7 +63,9 @@ sub store {
     }
 
     # open connection to send_nsca
-    open(my $send_nsca, '|-', $send_nsca_cmd, '-H', $nsca_server, '-c', $send_nsca_cfg, '-d', '!', '-to', 1)
+    open(my $send_nsca, '|-', $send_nsca_cmd,
+                              '-H', $nsca_server, '-p', $nsca_port,
+                              '-c', $send_nsca_cfg, '-d', '!', '-to', 1)
         or die "can't fork send_nsca: $!";
 
     # build and send report for each host
@@ -266,6 +269,7 @@ override builtin defaults, like so:
      dbi_host_query: 'SELECT ip, host AS name from hosts'
      dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
  nsca:
+     nsca_port: '5667'
      send_nsca_cmd: '/usr/bin/send_nsca'
      config_file:   '/etc/send_nsca.cfg'
      ignore_ports:  '^(?:Vlan|Po)\d+$'
@@ -305,6 +309,11 @@ regular expression.
 The location of the C<send_nsca> command on your system. YATG will default to
 C</usr/bin/send_nsca> and if you supply a value it must be a fully qualified
 path.
+
+=item C<nsca_port>
+
+The port where the NSCA daemon is listening, and the C<send_nsca> command
+should connect and submit results.
 
 =item C<config_file>
 

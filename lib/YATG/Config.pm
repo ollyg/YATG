@@ -46,6 +46,7 @@ __PACKAGE__->Validate({
     },
     nsca => {
         nsca_server    => { type => SCALAR, optional => 1 },
+        nsca_port      => { type => SCALAR, default => '5667' },
         send_nsca_cmd  => { type => SCALAR, default => '/usr/bin/send_nsca' },
         config_file    => { type => SCALAR, default => '/etc/send_nsca.cfg' },
         ignore_ports   => { type => SCALAR, default => '^(?:Vlan|Po)\d+$' },
