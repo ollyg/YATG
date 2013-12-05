@@ -78,14 +78,24 @@ die "Invalid filename format"
   and defined $second
   and $interval;
 
+# Get the epoch of the start of this yatg file.
+# Month is 0 indexed...
+my $epoch = timegm( $second, $minute, $hour, $day, $month - 1, $year );
+whisper("Epoch of old file: $epoch");
+
 my $number_of_intervals_to_lose = int $how_much_to_lop_off / $interval;
 _say sprintf "Going to lop off %s %s (approximately %s %s)",
   $number_of_intervals_to_lose, PL( 'interval', $number_of_intervals_to_lose ),
   $how_much_to_lop_off,         PL( 'second',   $how_much_to_lop_off );
 
 if ( $number_of_intervals_to_lose < 1 ) {
-    die
-"Aborting. Invalid number of intervals given: $number_of_intervals_to_lose\n";
+    die "Aborting. Invalid number of intervals given: $number_of_intervals_to_lose\n";
+}
+
+# Check to see if we're lopping off too much.
+if ( $how_much_to_lop_off + $epoch > time ) {
+    die sprintf( "New file will be in the future. (Epoch %s). Aborting\n",
+        $epoch + $how_much_to_lop_off );
 }
 
 # Create a temp file and write new data to it.
@@ -109,10 +119,6 @@ while (<$oldfile>) {
 }
 close $oldfile;
 
-# Get the epoch of the start of this yatg file.
-# Month is 0 indexed...
-my $epoch = timegm( $second, $minute, $hour, $day, $month - 1, $year );
-whisper("Epoch of old file: $epoch");
 
 # Find the new epoch of the yatg file with the new start date.
 my $new_epoch = $epoch + $number_of_intervals_to_lose * $interval;
@@ -132,6 +138,7 @@ my $new_filename = sprintf(
 );
 
 my $new_path = File::Spec->catfile( $directory, $new_filename );
+mutter "New file will be called $new_path";
 whisper "Moving '$tmpfile' to '$new_path'";
 
 if ( -d $new_path ) {
