@@ -346,7 +346,7 @@ YATG - Fast SNMP data poller daemon, with storage and graphing
 
 =head1 VERSION
 
-version 5.130840
+version 5.133410
 
 =head1 DESCRIPTION
 
@@ -405,6 +405,12 @@ Nagios via NSCA.
 These are modules which read stored results back to you, for a given time
 window. The data can be retrieved from local Disk, a Memcached server, or the
 disk on a remote networked server.
+
+=item C<yatg_trim>
+
+If using the Disk Store backend for results, eventually you'll want to save
+space by deleting old data. This script understands the backend file format
+and, given a duration, removes that amount of historical data from the file.
 
 =item RPC::Serialized handlers
 

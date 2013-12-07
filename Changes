@@ -1,3 +1,9 @@
+5.133410  2013-12-07 23:39:15 Europe/London
+
+  [NEW FEATURES]
+
+  * Add yatg-trim script to recover space used by Disk Store (C. Causer)
+
 5.130840  2013-03-25 22:41:57 Europe/London
 
   [NEW FEATURES]

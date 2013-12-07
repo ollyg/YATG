@@ -1,6 +1,6 @@
 package YATG::Callback;
 {
-  $YATG::Callback::VERSION = '5.130840';
+  $YATG::Callback::VERSION = '5.133410';
 }
 
 use strict;

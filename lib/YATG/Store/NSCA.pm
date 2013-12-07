@@ -1,6 +1,6 @@
 package YATG::Store::NSCA;
 {
-  $YATG::Store::NSCA::VERSION = '5.130840';
+  $YATG::Store::NSCA::VERSION = '5.133410';
 }
 
 use strict;
@@ -241,7 +241,7 @@ YATG::Store::NSCA - Back-end module to send polled data to a Nagios service
 
 =head1 VERSION
 
-version 5.130840
+version 5.133410
 
 =head1 DESCRIPTION
 

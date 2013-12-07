@@ -5,6 +5,7 @@ META.json
 META.yml
 Makefile.PL
 README
+bin/yatg-trim
 bin/yatg_updater
 examples/check_interfaces
 examples/rpc-serialized.daemontools.run
