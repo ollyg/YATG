@@ -1,6 +1,6 @@
 package YATG::SharedStorage;
 {
-  $YATG::SharedStorage::VERSION = '5.133410';
+  $YATG::SharedStorage::VERSION = '5.140510';
 }
 
 use strict;

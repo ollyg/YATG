@@ -2,7 +2,7 @@ NAME
     YATG - Fast SNMP data poller daemon, with storage and graphing
 
 VERSION
-    version 5.133410
+    version 5.140510
 
 DESCRIPTION
     YATG is a daemon (background process) which at intervals wakes up and
@@ -119,7 +119,7 @@ AUTHOR
     Oliver Gorwits <oliver@cpan.org>
 
 COPYRIGHT AND LICENSE
-    This software is copyright (c) 2013 by University of Oxford.
+    This software is copyright (c) 2014 by University of Oxford.
 
     This is free software; you can redistribute it and/or modify it under
     the same terms as the Perl 5 programming language system itself.

@@ -1,6 +1,6 @@
 package YATG::Store::Memcached;
 {
-  $YATG::Store::Memcached::VERSION = '5.133410';
+  $YATG::Store::Memcached::VERSION = '5.140510';
 }
 
 use strict;
@@ -71,7 +71,7 @@ YATG::Store::Memcached - Back-end module to store polled data to a Memcached
 
 =head1 VERSION
 
-version 5.133410
+version 5.140510
 
 =head1 DESCRIPTION
 
@@ -151,7 +151,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by University of Oxford.
+This software is copyright (c) 2014 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

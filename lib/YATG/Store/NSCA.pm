@@ -1,6 +1,6 @@
 package YATG::Store::NSCA;
 {
-  $YATG::Store::NSCA::VERSION = '5.133410';
+  $YATG::Store::NSCA::VERSION = '5.140510';
 }
 
 use strict;
@@ -241,7 +241,7 @@ YATG::Store::NSCA - Back-end module to send polled data to a Nagios service
 
 =head1 VERSION
 
-version 5.133410
+version 5.140510
 
 =head1 DESCRIPTION
 
@@ -282,6 +282,7 @@ override builtin defaults, like so:
 
  yatg:
      dbi_host_query: 'SELECT ip, host AS name from hosts'
+     dbi_community_query: 'SELECT ip, snmp_community FROM hosts'
      dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
  nsca:
      nsca_port: '5667'
@@ -303,7 +304,17 @@ you need a configuration entry with an SQL query. The query must return two
 columns, named I<ip> and I<name>. For example:
 
  yatg:
-     dbi_host_query: 'SELECT ip, host AS name from hosts;'
+     dbi_host_query: 'SELECT ip, host AS name from hosts'
+
+=item C<dbi_community_query>
+
+For performance you can retrieve community strings from a database instead
+of trying a list in turn for each device (which is very slow indeed). Pass
+an SQL statement which returns the IP and community string for each device.
+If used, this option causes YATG to ignore the C<communities> configuration.
+
+ yatg:
+     dbi_community_query: 'SELECT ip, snmp_community FROM hosts'
 
 =item C<dbi_interfaces_query>
 
@@ -376,7 +387,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by University of Oxford.
+This software is copyright (c) 2014 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
