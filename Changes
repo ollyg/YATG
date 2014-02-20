@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+5.140510  2014-02-20 17:02:33 Europe/London
+
   [NEW FEATURES]
 
   * Support dbi_community_query to retrieve known community strings from a DB
