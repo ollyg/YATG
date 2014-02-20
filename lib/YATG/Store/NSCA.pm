@@ -267,6 +267,7 @@ override builtin defaults, like so:
 
  yatg:
      dbi_host_query: 'SELECT ip, host AS name from hosts'
+     dbi_community_query: 'SELECT ip, snmp_community FROM hosts'
      dbi_interfaces_query: 'SELECT name FROM hostinterfaces WHERE ip = ?'
  nsca:
      nsca_port: '5667'
@@ -288,7 +289,17 @@ you need a configuration entry with an SQL query. The query must return two
 columns, named I<ip> and I<name>. For example:
 
  yatg:
-     dbi_host_query: 'SELECT ip, host AS name from hosts;'
+     dbi_host_query: 'SELECT ip, host AS name from hosts'
+
+=item C<dbi_community_query>
+
+For performance you can retrieve community strings from a database instead
+of trying a list in turn for each device (which is very slow indeed). Pass
+an SQL statement which returns the IP and community string for each device.
+If used, this option causes YATG to ignore the C<communities> configuration.
+
+ yatg:
+     dbi_community_query: 'SELECT ip, snmp_community FROM hosts'
 
 =item C<dbi_interfaces_query>
 

@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
 use strict;
 use warnings FATAL => 'all';
 
@@ -157,6 +160,38 @@ foreach my $leaf (keys %{$config->yatg->{'oids'}}) {
         or die "Failed to translate leaf $leaf to OID\n";
 }
 
+sub get_community {
+    my $ip = shift;
+
+    # shortcut if there is only one community supplied
+    if (scalar @{$config->yatg->{'communities'}} == 1) {
+        $cache->{community_for}->{$ip}
+            = $config->yatg->{'communities'}->[0];
+        return;
+    }
+
+    foreach my $c (@{$config->yatg->{'communities'}}) {
+        my $sess = SNMP::Session->new(
+            DestHost  => $ip,
+            Version   => 1,
+            Timeout   => 500000,
+            Community => $c,
+        );
+        my $val = $sess->get('sysUpTime.0');
+
+        # failure, go to next community
+        next if !$val or $sess->{ErrorNum} or $sess->{ErrorStr};
+
+        # success, use this community and go to next device
+        $cache->{community_for}->{$ip} = $c;
+        # to_log("commnity for $ip discovered as $c\n") if $DEBUG;
+        last;
+    }
+
+    to_log("warning: Failed to find community for [$ip] !\n")
+      if !exists $cache->{community_for}->{$ip};
+}
+
 sub prime_cache {
     to_log("Generating oid/host map... \n") if $DEBUG;
 
@@ -203,6 +238,41 @@ sub prime_cache {
             $cache->{oids}->{$leaf}->{indexer} = 0;
         }
     }
+
+    to_log("Getting communities... \n") if $DEBUG;
+
+    # connect to each device and find out its community,
+    # shortcut if there is only one community supplied
+    if (scalar @{$config->yatg->{'communities'}} == 1) {
+        map {$cache->{community_for}->{$_}
+                    = $config->yatg->{'communities'}->[0]}
+            @{$cache->{devices}};
+    }
+    else {
+        # build lookup table for snmp communities
+        if ($config->yatg->{'dbi_community_query'}) {
+            my $dbh = DBI->connect(
+                @{$config->yatg->{'dbi_connect'}},
+                {PrintError => 1, RaiseError => 1, AutoCommit => 1}
+            ) or die $DBI::errstr;
+
+            $cache->{'community_for'} = { map {$_->{ip} => $_->{snmp_community}} @{
+                $dbh->selectall_arrayref(
+                  $config->yatg->{'dbi_community_query'},
+                  { Slice => {} },
+                )}
+            };
+
+            # p $cache->{'community_for'} if exists $cache->{'community_for'};
+            $dbh->disconnect;
+        }
+        else {
+            foreach my $ip (@{$cache->{devices}}) {
+                # to_log("finding community string for $ip...\n") if $DEBUG;
+                &get_community($ip);
+            }
+        }
+    }
 }
 
 sub check_newhosts_watch {
@@ -219,59 +289,11 @@ sub check_newhosts_watch {
     &prime_cache;
 }
 
-sub get_community {
-    my $ip = shift;
-
-    # shortcut if there is only one community supplied
-    if (scalar @{$config->yatg->{'communities'}} == 1) {
-        $cache->{community_for}->{$ip}
-            = $config->yatg->{'communities'}->[0];
-        return;
-    }
-
-    foreach my $c (@{$config->yatg->{'communities'}}) {
-        my $sess = SNMP::Session->new(
-            DestHost  => $ip,
-            Version   => 1,
-            Timeout   => 500000,
-            Community => $c,
-        );
-        my $val = $sess->get('sysUpTime.0');
-
-        # failure, go to next community
-        next if !$val or $sess->{ErrorNum} or $sess->{ErrorStr};
-
-        # success, use this community and go to next device
-        $cache->{community_for}->{$ip} = $c;
-        # to_log("commnity for $ip discovered as $c\n") if $DEBUG;
-        last;
-    }
-
-    to_log("warning: Failed to find community for [$ip] !\n")
-      if !exists $cache->{community_for}->{$ip};
-}
-
 # load storage module(s)
 foreach my $module (@to_load) {
     die "Request to load undefined module\n" if !defined $module;
     eval "require YATG::Store::$module"
         or die "Failed to load $module store module: $@\n";
-}
-
-to_log("Getting communities... \n") if $DEBUG;
-
-# connect to each device and find out its community,
-# shortcut if there is only one community supplied
-if (scalar @{$config->yatg->{'communities'}} == 1) {
-    map {$cache->{community_for}->{$_}
-                = $config->yatg->{'communities'}->[0]}
-        @{$cache->{devices}};
-}
-else {
-    foreach my $ip (@{$cache->{devices}}) {
-        # to_log("finding community string for $ip...\n") if $DEBUG;
-        &get_community($ip);
-    }
 }
 
 &prime_cache;
@@ -290,17 +312,11 @@ while (1) {
     my $se = SNMP::Effective->new(
         MaxSessions   => $POLLERS,
         MasterTimeout => $TIMEOUT,
-    );  
+    );
 
     foreach my $ip (@{$cache->{devices}}) {
         next unless scalar (keys %{$cache->{get_for}->{$ip}}) > 0;
-
-        # "new" device, find the community
-        if (!exists $cache->{community_for}->{$ip}) {
-            to_log("Possible new device [$ip].\n") if $DEBUG;
-            &get_community($ip);
-            next unless exists $cache->{community_for}->{$ip};
-        }
+        next unless $cache->{community_for}->{$ip};
 
         $se->add(
             desthost => $ip,
@@ -311,7 +327,7 @@ while (1) {
             callback => \&YATG::Callback::snmp_callback,
             walk     => [ keys %{$cache->{get_for}->{$ip}} ],
         );
-    }   
+    }
 
     my $exec = time;
     $se->execute;
