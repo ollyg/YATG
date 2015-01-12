@@ -1,0 +1,8 @@
+YATG-*
+init.sql
+test.*
+*.swp
+*.pid
+test.pl
+MYMETA.*
+*.tar.gz

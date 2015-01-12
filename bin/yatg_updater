@@ -362,7 +362,7 @@ YATG - Fast SNMP data poller daemon, with storage and graphing
 
 =head1 VERSION
 
-version 5.140510
+version 5.20000
 
 =head1 DESCRIPTION
 
@@ -499,7 +499,7 @@ Oliver Gorwits <oliver@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2014 by University of Oxford.
+This software is copyright (c) 2015 by University of Oxford.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
