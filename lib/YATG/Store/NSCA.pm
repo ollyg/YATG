@@ -34,8 +34,8 @@ sub store {
     my $ifInErrorsCache   = YATG::SharedStorage->ifInErrors();
     my $ifInDiscardsCache = YATG::SharedStorage->ifInDiscards();
 
-    # TODO: should be configurable
-    my $threshold = int($config->{yatg}->{interval} / 60);
+    my $threshold = $config->{nsca}->{threshold}
+      || int($config->{yatg}->{interval} / 60);
 
     my $cache = YATG::SharedStorage->cache();
     my $nsca_server = $config->{nsca}->{nsca_server}
@@ -294,6 +294,7 @@ override builtin defaults, like so:
      ignore_error_descr:   '(?:NOERR)'
      ignore_discard_descr: '(?:NODIS)'
      service_prefix:  'Interfaces'
+     threshold:  '5'
 
 =over 4
 
@@ -370,6 +371,13 @@ There is no default setting for these options.
 Prefix of he Nagios Service Check name to use when submitting results. To this
 is added the name of the data check such as "Status" or "Errors".  This must
 match the configured name on your Nagios server, and defaults to "Interfaces".
+
+=item C<threshold>
+
+Quantity of Errors or Discards which have to appear on an Interface in a
+reporting period before an alert is generated. The default is the check
+interval divided by 60 (that is, for checks every five minutes, the threshold
+is five).
 
 =back
 

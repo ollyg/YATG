@@ -58,6 +58,7 @@ __PACKAGE__->Validate({
         ignore_error_descr   => { type => SCALAR, optional => 1 },
         ignore_discard_descr => { type => SCALAR, optional => 1 },
         service_prefix => { type => SCALAR, default => 'Interfaces' },
+        threshold => { type => SCALAR, optional => 1 },
     },
 });
 
