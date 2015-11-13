@@ -66,7 +66,7 @@ sub store {
     }
 
     # open connection to send_nsca
-    open(my $send_nsca, '|-', $send_nsca_cmd,
+    open(my $send_nsca, '|-', (split /\s+/, $send_nsca_cmd),
                               '-H', $nsca_server, '-p', $nsca_port,
                               '-c', $send_nsca_cfg, '-d', '!', '-to', 1)
         or die "can't fork send_nsca: $!";
